@@ -1,0 +1,6 @@
+
+| **Persona**                      | **Nhu cầu**                                                | **Điểm đau**                                                                       | **Cách TrustLens đáp ứng**                                               |
+|----------------------------------|------------------------------------------------------------|------------------------------------------------------------------------------------|--------------------------------------------------------------------------|
+| Giảng viên chấm báo cáo môn CNTT | Kiểm tra nhanh tính hợp lệ của tài liệu tham khảo.         | Tốn thời gian tra từng nguồn; khó đánh giá đồng nhất giữa các nhóm sinh viên.      | Tạo bảng điểm nguồn, cảnh báo và gợi ý sửa dựa trên tiêu chí thống nhất. |
+| Giảng viên hướng dẫn nghiên cứu  | Phản hồi cho sinh viên về chất lượng nguồn.                | Sinh viên trích nguồn blog, tài liệu cũ, nguồn không liên quan hoặc không tồn tại. | Hiển thị lý do điểm thấp và đề xuất cách cải thiện.                      |
+| Quản trị hệ thống khoa/bộ môn    | Theo dõi việc sử dụng hệ thống và cấu hình chuẩn đánh giá. | Cần quản lý nhiều lớp, nhiều giảng viên, nhiều loại assignment.                    | Cung cấp role, cấu hình preset, audit log và dashboard vận hành.         |

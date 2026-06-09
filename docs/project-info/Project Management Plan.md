@@ -1,0 +1,5 @@
+| **Vai trò**               | **Phạm vi chịu trách nhiệm trong SRS**                                                             | **Đầu ra cần bàn giao**                                                          |
+|---------------------------|----------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------|
+| DS/BA/Academic Evaluation | SRS, tiêu chí đánh giá, rule học thuật, Trust Score, test case thuật toán, nội dung report.        | SRS, scoring config, test data, warning dictionary, report wording.              |
+| Backend                   | Kiến trúc server, database, upload, file processing, metadata API, queue, scoring service, export. | REST API, DB schema, worker, module extraction/metadata/scoring, export service. |
+| Frontend                  | Design system, dashboard, upload UI, job status, report table, export UI, admin config UI.         | React screens, UI components, API integration, responsive dashboard.             |
