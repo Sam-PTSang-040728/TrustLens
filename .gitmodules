@@ -1,5 +1,5 @@
 [submodule "backend"]
-	path = apps/backend
+	path = backend
 	url = https://github.com/PhanTanSang-netizen/TrustLens-Backend.git
 [submodule "frontend"]
 	path = apps/frontend
@@ -7,3 +7,6 @@
 [submodule "apps/frontend"]
 	path = apps/frontend
 	url = https://github.com/tranquynhnhu102025-hash/Frontend-TrustLens.git
+[submodule "apps/backend"]
+	path = apps/backend
+	url = https://github.com/PhanTanSang-netizen/TrustLens-Backend.git
