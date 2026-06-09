@@ -1,15 +1,3 @@
-## 12.1. Chiến lược kiểm thử
-
-| **Loại kiểm thử**      | **Phạm vi**                                                         | **Công cụ/Phương pháp**        |
-|------------------------|---------------------------------------------------------------------|--------------------------------|
-| Unit test              | Scoring formula, parsing utility, validation, warning rules.        | pytest cho backend Python.     |
-| Integration test       | Upload -\> job -\> extraction -\> report; API auth/permission.      | pytest + test database.        |
-| Algorithm validation   | Citation extraction, DOI lookup, title matching, relevance ranking. | Tập file mẫu có nhãn thủ công. |
-| UI test thủ công       | Login, upload, dashboard, filter, export.                           | Checklist demo.                |
-| Security smoke test    | Không token, sai role, file sai định dạng, file quá lớn.            | HTTP client/Insomnia/Postman.  |
-| Performance smoke test | File 10-20 trang, batch 5 file.                                     | Đo thời gian job và response.  |
-
-## 12.2. Test case nghiệm thu MVP
 
 | **ID** | **Mục tiêu test**                      | **Dữ liệu/Điều kiện**               | **Kết quả mong đợi**                                                   |
 |--------|----------------------------------------|-------------------------------------|------------------------------------------------------------------------|
@@ -63,19 +51,3 @@
 | TC-48  | Batch một file lỗi                     | 4 file hợp lệ, 1 file lỗi           | File lỗi không dừng các file còn lại.                                  |
 | TC-49  | Không kết luận quá mức                 | Provider unavailable                | Không ghi nguồn giả; ghi unknown/provider error.                       |
 | TC-50  | Demo end-to-end                        | File mẫu chuẩn                      | Upload -\> analyze -\> report -\> export thành công trong script demo. |
-
-## 12.3. Tiêu chí nghiệm thu MVP
-
-- Hoàn thành end-to-end flow cho ít nhất 2 file mẫu: một DOCX, một PDF text-based.
-
-- Trích xuất được tối thiểu 80% citation trong file mẫu và hiển thị raw citation trong dashboard.
-
-- Tính được Trust Score từng citation và toàn bài với giải thích điểm thành phần.
-
-- Có ít nhất 6 loại cảnh báo hoạt động: missing field, style mismatch, source not found, low credibility, outdated, low relevance.
-
-- Xuất được ít nhất một định dạng báo cáo; ưu tiên PDF, sau đó DOCX/XLSX.
-
-- Có README cài đặt, file môi trường mẫu, dữ liệu demo và video demo 3-5 phút.
-
-- Không sử dụng dữ liệu/mã nguồn/hình ảnh vi phạm bản quyền trong demo.

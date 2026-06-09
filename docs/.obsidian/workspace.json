@@ -4,21 +4,17 @@
     "type": "split",
     "children": [
       {
-        "id": "059b673343eef352",
+        "id": "6f6d9795e3c8c84d",
         "type": "tabs",
         "children": [
           {
-            "id": "9f1340c6bb896740",
+            "id": "f9397af05e31bbf5",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "SRS/13..md",
-                "mode": "source",
-                "source": false
-              },
+              "type": "empty",
+              "state": {},
               "icon": "lucide-file",
-              "title": "13."
+              "title": "Tab mới"
             }
           }
         ]
@@ -186,8 +182,18 @@
       "publish:Xuất bản các thay đổi...": false
     }
   },
-  "active": "9f1340c6bb896740",
+  "active": "f9397af05e31bbf5",
   "lastOpenFiles": [
+    "project-info/Project Management Plan.md",
+    "project-info/project-members.md",
+    "project-info/Project Submission Checklist.md",
+    "architecture/README.md",
+    "00-project-overview/project-overview.md",
+    "01-requirements/srs.md",
+    "02-academic-evaluation/trust-score-formula.md",
+    "02-academic-evaluation/evaluation-criteria.md",
+    "README.md",
+    "SRS/13..md",
     "SRS/11. Re.md",
     "SRS/3. Specific Requirements/3.4 Non-functional Requirements.md",
     "SRS/10..md",
@@ -200,21 +206,11 @@
     "SRS/FM-01. Document Control.md",
     "SRS/TrustLens_SRS_v1.0.md",
     "SRS/3. Specific Requirements/3. Spcific Requirements.md",
-    "README.md",
     "SRS/6. Non-functional Requirements.md",
     "SRS/Appendices/APP-D API.md",
     "SRS/9..md",
     "SRS/5..md",
     "SRS/1. Introduction.md",
-    "SRS/Appendices/APP-B.1 Use Case Exceptions.md",
-    "SRS/4. Functional Requirements.md",
-    "SRS/Appendices/APP-B.2 State Model.md",
-    "SRS/Appendices/APP-A.md",
-    "SRS/Appendices/APP-B.3 Use Case Specifications.md",
-    "SRS/Appendices/APP-B User Analysis.md",
-    "SRS/Appendices/APP-I Use Cases and Workflow Models.md",
-    "SRS/Appendices/APP-J Traceability Matrix.md",
-    "SRS/Appendices/APP-L Risk Log.md",
     "{B8563B9A-FC8B-4989-8E1B-201ED193BAB5}.tmp",
     "{FF7719AA-C837-4F50-8E23-57B1B1EC96C9}.tmp",
     "SRS/Appendices",
