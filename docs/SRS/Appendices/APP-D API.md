@@ -30,17 +30,11 @@
 Quy tắc đặt tên mã lỗi
 
 - FILE\_\*: lỗi upload, định dạng, dung lượng, file hỏng.
-
 - EXTRACT\_\*: lỗi trích xuất text, layout, scan/OCR.
-
 - CITATION\_\*: lỗi tách citation, thiếu trường, sai style.
-
 - METADATA\_\*: lỗi provider, DOI, title match.
-
 - SCORING\_\*: lỗi trọng số, scoring config, missing score.
-
 - AUTH\_\*: lỗi xác thực/phân quyền.
-
 - EXPORT\_\*: lỗi xuất báo cáo.
 
 ```json
@@ -56,6 +50,9 @@ Quy tắc đặt tên mã lỗi
 ```
 
 
+# Error Handling Flow
+
+Xem tại [[D27. API Error Handling Flow]]
 
 | **HTTP status** | **Trường hợp**                    | **Ví dụ error_code**                     |
 | --------------- | --------------------------------- | ---------------------------------------- |
@@ -69,3 +66,5 @@ Quy tắc đặt tên mã lỗi
 | 429             | Rate limit provider hoặc hệ thống | PROVIDER_RATE_LIMITED                    |
 | 500             | Lỗi hệ thống                      | INTERNAL_ERROR                           |
 | 503             | Dịch vụ phụ thuộc không sẵn sàng  | METADATA_PROVIDER_UNAVAILABLE            |
+
+![[D27-API-error-handling-flow.png]]
