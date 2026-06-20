@@ -1,0 +1,19 @@
+{
+  "folders": [
+    {
+      "path": ".",
+      "name": "TrustLens Root"
+    },
+    {
+      "path": "apps/backend",
+      "name": "TrustLens Backend"
+    },
+    {
+      "path": "apps/frontend",
+      "name": "TrustLens Frontend"
+    }
+  ],
+  "settings": {
+    "powershell.cwd": "TrustLens Root"
+  }
+}
