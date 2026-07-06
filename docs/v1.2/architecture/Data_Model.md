@@ -1,228 +1,203 @@
-# Logical Data Model
+# 07. Mô hình Dữ liệu Logic
 
-| **Bảng/Entity**     | **Mục đích**                            | **Trường chính**                                                                              |
-|---------------------|-----------------------------------------|-----------------------------------------------------------------------------------------------|
-| users               | Người dùng hệ thống                     | id, email, full_name, role, password_hash, is_active, created_at                              |
-| roles_permissions   | Định nghĩa quyền theo vai trò           | role, permission_code, description                                                            |
-| terms               | Học kỳ/năm học                          | id, name, start_date, end_date                                                                |
-| courses             | Học phần/môn học                        | id, code, name, description                                                                   |
-| classes             | Lớp học phần                            | id, course_id, term_id, lecturer_id, class_code, name                                         |
-| students            | Sinh viên hoặc nhóm sinh viên tối thiểu | id, student_code, full_name, email, group_name                                                |
-| assignments         | Bài nộp cần thẩm định                   | id, class_id, title, due_date, required_style, scoring_config_id                              |
-| submissions         | Một bài báo cáo được upload             | id, assignment_id, owner_label, file_id, status, overall_score                                |
-| files               | Metadata file upload                    | id, original_name, stored_path, mime_type, size_bytes, checksum, uploaded_by                  |
-| processing_jobs     | Job phân tích bất đồng bộ               | id, submission_id, status, progress, error_code, started_at, finished_at                      |
-| extracted_documents | Text và layout đã trích xuất            | id, submission_id, full_text, page_count, extraction_method                                   |
-| reference_sections  | Vùng tài liệu tham khảo                 | id, submission_id, start_offset, end_offset, heading, confidence                              |
-| citations           | Từng citation được tách                 | id, submission_id, raw_text, order_index, confidence, duplicate_of                            |
-| citation_fields     | Trường citation chuẩn hóa               | citation_id, title, authors, year, doi, url, venue, publisher, style_detected                 |
-| metadata_records    | Kết quả metadata lookup                 | id, citation_id, provider, match_status, confidence, raw_json, normalized_json                |
-| score_components    | Điểm thành phần                         | citation_id, format_score, existence_score, credibility_score, recency_score, relevance_score |
-| trust_scores        | Điểm tổng hợp                           | id, citation_id/submission_id, score, label, config_version, explanation                      |
-| warnings            | Cảnh báo và gợi ý                       | id, citation_id/submission_id, code, severity, message, suggested_action                      |
-| reports             | Báo cáo kết quả                         | id, submission_id, generated_at, generated_by, summary_json, export_paths                     |
-| scoring_configs     | Cấu hình trọng số                       | id, name, version, weights_json, thresholds_json, is_active                                   |
-| metadata_providers  | Cấu hình provider                       | id, name, base_url, is_enabled, timeout_ms, priority                                          |
-| audit_logs          | Lịch sử thao tác                        | id, actor_id, action, object_type, object_id, ip, created_at                                  |
+## 1. Mục tiêu
 
-# ERD
+Mô hình phải truy vết được:
 
-users 1-n classes  
-courses 1-n classes  
-classes 1-n assignments  
-assignments 1-n submissions  
-submissions 1-1 files  
-submissions 1-n processing_jobs  
-submissions 1-1 extracted_documents  
-submissions 1-1 reference_sections  
-submissions 1-n citations  
-citations 1-1 citation_fields  
-citations 1-n metadata_records  
-citations 1-1 score_components  
-citations 1-1 trust_scores  
-citations 1-n warnings  
-submissions 1-n reports  
-scoring_configs 1-n assignments / reports  
-users 1-n audit_logs
+```text
+Ai → lớp/assignment nào → file/submission/job nào
+→ citation/metadata nào → scoring version nào
+→ report/export nào
+```
 
-# D23. Entity Relationship Diagram
+## 2. Nhóm thực thể
+
+### Identity
+
+- `User`
+- `UserProfile`
+- `RolePermission`
+- `AuditLog`
+
+### Academic
+
+- `Course`
+- `ClassModel`
+- `Assignment`
+- `Term`
+- `Student`
+
+`Student` và `Term` có model nhưng mức sử dụng trong endpoint baseline cần xác nhận thêm.
+
+### Submission
+
+- `File`
+- `Submission`
+- `ProcessingJob`
+- `ExtractedDocument`
+- `ReferenceSection`
+
+### Citation/metadata
+
+- `Citation`
+- `CitationField`
+- `MetadataProvider`
+- `MetadataRecord`
+
+### Scoring/report
+
+- `ScoreComponent`
+- `TrustScore`
+- `CitationScore`
+- `Warning`
+- `ScoringConfig`
+- `Report`
+- `ReportExport`
+
+## 3. Quan hệ logic
 
 ```mermaid
 erDiagram
-    users ||--o{ classes : teaches
-    users ||--o{ audit_logs : creates
-    courses ||--o{ classes : contains
-    terms ||--o{ classes : schedules
-    classes ||--o{ assignments : has
-    assignments ||--o{ submissions : receives
-    scoring_configs ||--o{ assignments : configures
-    submissions ||--|| files : stores
-    submissions ||--o{ processing_jobs : processed_by
-    submissions ||--|| extracted_documents : has
-    submissions ||--|| reference_sections : has
-    submissions ||--o{ citations : contains
-    citations ||--|| citation_fields : normalizes_to
-    citations ||--o{ metadata_records : verifies_with
-    citations ||--|| score_components : has
-    citations ||--|| trust_scores : has
-    citations ||--o{ warnings : triggers
-    submissions ||--o{ reports : generates
-    metadata_providers ||--o{ metadata_records : supplies
+    USER ||--o| USER_PROFILE : has
+    USER ||--o{ CLASS : owns
+    USER ||--o{ FILE : uploads
+    USER ||--o{ AUDIT_LOG : performs
+    COURSE ||--o{ CLASS : contains
+    CLASS ||--o{ ASSIGNMENT : contains
+    ASSIGNMENT ||--o{ SUBMISSION : receives
+    ASSIGNMENT }o--o| SCORING_CONFIG : uses
+    FILE ||--|| SUBMISSION : backs
+    SUBMISSION ||--o{ PROCESSING_JOB : processes
+    SUBMISSION ||--o| EXTRACTED_DOCUMENT : produces
+    SUBMISSION ||--o| REFERENCE_SECTION : contains
+    SUBMISSION ||--o{ CITATION : contains
+    SUBMISSION ||--o{ METADATA_RECORD : verifies
+    SUBMISSION ||--o| REPORT : produces
+    REFERENCE_SECTION ||--o{ CITATION : groups
+    CITATION ||--o{ CITATION_FIELD : parses
+    CITATION ||--o{ METADATA_RECORD : matches
+    CITATION ||--o| CITATION_SCORE : scores
+    CITATION ||--o{ WARNING : raises
+    REPORT ||--o{ REPORT_EXPORT : exports
+    REPORT }o--|| PROCESSING_JOB : generated_by
 ```
 
-```mermaid
-erDiagram 
-	users {
-        uuid id PK
-        string email UK
-        string full_name
-        string role
-        string password_hash
-        boolean is_active
-        datetime created_at
-    }
+## 4. Quy tắc toàn vẹn
 
-    courses {
-        uuid id PK
-        string code
-        string name
-        text description
-    }
+### Identity
 
-    classes {
-        uuid id PK
-        uuid course_id FK
-        uuid term_id FK
-        uuid lecturer_id FK
-        string class_code
-        string name
-    }
+- Email duy nhất sau chuẩn hóa.
+- Role thuộc tập hỗ trợ.
+- User inactive không lấy token mới.
+- Permission backend là nguồn kiểm soát.
 
-    assignments {
-        uuid id PK
-        uuid class_id FK
-        string title
-        datetime due_date
-        string required_style
-        uuid scoring_config_id FK
-    }
+### Ownership học thuật
 
-    submissions {
-        uuid id PK
-        uuid assignment_id FK
-        string owner_label
-        uuid file_id FK
-        string status
-        float overall_score
-    }
+- Class có một `lecturer_id`.
+- Assignment thuộc một class.
+- Lecturer chỉ truy cập scope mình sở hữu.
+- Admin có phạm vi toàn hệ thống hiện tại.
+- Khi bổ sung tenant, mọi thực thể nghiệp vụ phải tenant-scoped và được test isolation.
 
-    files {
-        uuid id PK
-        string original_name
-        string stored_path
-        string mime_type
-        integer size_bytes
-        string checksum
-        uuid uploaded_by FK
-    }
+### File
 
-    processing_jobs {
-        uuid id PK
-        uuid submission_id FK
-        string status
-        integer progress
-        string error_code
-        datetime started_at
-        datetime finished_at
-    }
+File phải có original name, stored name/path, MIME, size, checksum, uploader và timestamp. Path không nhận trực tiếp từ client; tên lưu không đoán được; phải đối soát record với file vật lý.
 
-    citations {
-        uuid id PK
-        uuid submission_id FK
-        text raw_text
-        integer order_index
-        float confidence
-        uuid duplicate_of
-    }
+### Submission
 
-    citation_fields {
-        uuid citation_id PK
-        string title
-        string authors
-        integer year
-        string doi
-        string url
-        string venue
-        string publisher
-        string style_detected
-    }
+- Thuộc assignment hợp lệ.
+- File tồn tại.
+- Xóa không để report/export mồ côi.
+- Status phải đồng bộ job/report.
 
-    metadata_records {
-        uuid id PK
-        uuid citation_id FK
-        uuid metadata_provider_id FK
-        string provider
-        string match_status
-        float confidence
-        json raw_json
-        json normalized_json
-    }
+### ProcessingJob
 
-    score_components {
-        uuid citation_id PK
-        float format_score
-        float existence_score
-        float credibility_score
-        float recency_score
-        float relevance_score
-    }
+- Thuộc một submission.
+- Retry liên kết job cũ.
+- Progress 0–100.
+- Chỉ chuyển trạng thái hợp lệ.
+- Completed phải có report hoặc lý do rõ nếu loại job không tạo report.
+- Cần idempotency/unique rule cho active jobs.
 
-    trust_scores {
-        uuid id PK
-        uuid citation_id FK
-        uuid submission_id FK
-        float score
-        string label
-        string config_version
-        text explanation
-    }
+### Citation
 
-    warnings {
-        uuid id PK
-        uuid citation_id FK
-        uuid submission_id FK
-        string code
-        string severity
-        text message
-        text suggested_action
-    }
+- `sequence_no` giữ thứ tự.
+- Raw text được giữ để audit parser.
+- DOI/URL chuẩn hóa nhưng không làm mất bản gốc.
+- Reprocessing phải có replace/version strategy.
 
-    reports {
-        uuid id PK
-        uuid submission_id FK
-        datetime generated_at
-        uuid generated_by FK
-        json summary_json
-        json export_paths
-    }
-```
+### Metadata
 
+- Ghi provider, query, status, confidence, evidence.
+- `PROVIDER_UNAVAILABLE` khác `NOT_FOUND`.
+- Raw response cần size/retention policy.
+- Không trộn record giữa submission.
 
-# D24. Data Lifecycle
+### Scoring
 
-```mermaid
-flowchart TD
-    A["1. User uploads file"] --> B["2. Store file metadata and binary path"]
-    B --> C["3. Extract full_text"]
-    C --> D["4. Store extracted_documents"]
-    D --> E["5. Detect reference_sections"]
-    E --> F["6. Store raw citations"]
-    F --> G["7. Store normalized citation_fields"]
-    G --> H["8. Lookup and store metadata_records"]
-    H --> I["9. Store score_components"]
-    I --> J["10. Store trust_scores"]
-    J --> K["11. Store warnings"]
-    K --> L["12. Generate reports"]
-    L --> M["13. Save export files"]
-    M --> N["14. Audit user actions and system events"]
-```
+- Config versioned.
+- Tổng weight bằng 100.
+- Report lưu scoring version.
+- Warning có code/severity/recommendation.
+- Không sửa ngược report lịch sử khi đổi thuật toán.
+
+### Report/export
+
+- Report thuộc submission và liên kết job.
+- Export thuộc report.
+- Download kiểm tra quyền ngược tới class owner.
+- File export mất phải trả lỗi rõ và có thể tái tạo theo policy.
+
+## 5. State machine đề xuất
+
+| State | Ý nghĩa |
+|---|---|
+| `QUEUED` | Đã tạo job |
+| `VALIDATING` | Kiểm tra file/context |
+| `EXTRACTING` | Trích xuất text |
+| `DETECTING_REFERENCES` | Xác định danh mục |
+| `PARSING_CITATIONS` | Tách citation |
+| `NORMALIZING` | Chuẩn hóa |
+| `VERIFYING_METADATA` | Đối chiếu provider |
+| `SCORING` | Tính điểm |
+| `BUILDING_REPORT` | Tạo report |
+| `COMPLETED` | Hoàn tất |
+| `FAILED_*` | Lỗi theo stage |
+| `CANCELLED` | Bị hủy |
+
+Không nên duy trì đồng thời state rút gọn và chi tiết nếu không có mapping chuẩn.
+
+## 6. Soft delete và retention
+
+Một số entity có dấu hiệu soft delete. Cần chuẩn hóa:
+
+- `deleted_at`, `deleted_by`.
+- Query mặc định loại record đã xóa.
+- Retention window.
+- Restore policy.
+- Purge file vật lý.
+- Audit tối thiểu được giữ.
+
+## 7. Dữ liệu nhạy cảm
+
+| Dữ liệu | Mức | Kiểm soát |
+|---|---|---|
+| Password hash | Cao | Không return/log |
+| Token | Cao | Redact, expiry, revoke |
+| File report | Cao | Ownership, encryption, retention |
+| Extracted text | Cao | Data minimization |
+| Public metadata | Trung bình | Provenance/cache policy |
+| Audit | Cao | Restricted access |
+| AI request/evidence | Cao | Không raw log |
+| Score/report | Trung bình-Cao | Ownership + explainability |
+
+## 8. Khoảng trống
+
+- Chưa tenant.
+- Chưa batch entities trong implementation.
+- Chưa durable queue metadata.
+- Retention chưa khóa.
+- Chưa xác nhận object storage abstraction.
+- Chưa có consent/legal basis model.
+- Chưa benchmark dataset/model registry.
+- Một số model skeleton có thể chưa được endpoint sử dụng.

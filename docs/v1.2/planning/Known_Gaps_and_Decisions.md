@@ -61,7 +61,7 @@ Weight, threshold, model hoặc logic có tác động phải tăng version.
 
 ## 3. Sai lệch docs cũ
 
-- `trustlens.md` là review SRS, không phải product docs; đã phân tách vào SRS/architecture/test.
+- `archive/reviews/SRS_Standardization_Review.md` là review SRS, không phải product docs; đã phân tách vào SRS/architecture/test.
 - P0 cũ dùng C1–C8 và Celery/Redis như baseline; không còn đúng hiện trạng.
 - P1 có một số nội dung đã partial như export, audit, duplicate/confidence; batch/retention/observability vẫn thiếu.
 - P2 giữ làm roadmap; OCR/LMS/multi-tenant/MLOps không được mô tả implemented.
