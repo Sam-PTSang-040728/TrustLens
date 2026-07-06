@@ -26,7 +26,7 @@ validation, production hardening, restore evidence, and academic calibration. Se
 | Testing | [Test plan and quality gates](testing/Test_Plan.md), [Integration and E2E specification](testing/Integration_and_E2E_Test_Specification.md) |
 | Limitations | [Known limitations](limitations/Known_Limitations.md) |
 | Planning | [P0/P1 completion status](planning/P0_P1_Completion_Status.md), [v1.2 completion backlog](planning/V1_2_Completion_Backlog.md), [Roadmap](planning/Roadmap.md), [Known gaps and decisions](planning/Known_Gaps_and_Decisions.md) |
-| Governance | [Contributing](governance/Contributing.md) |
+| Governance | [Contributing](governance/Contributing.md), [Versioning](governance/Versioning.md) |
 | Archive | [Source baseline](archive/Source_Baseline.md), [Migration notes](archive/Migration_Notes.md), [Old plans](archive/old-plans/), [Reviews](archive/reviews/) |
 
 ## Release Evidence Hierarchy
@@ -58,4 +58,3 @@ the capability works end to end.
 5. Do not declare a release ready until the
    [Release readiness checklist](operations/Release_Readiness_Checklist.md) has evidence.
 6. Keep root `docs/` minimal: only this versioned docs folder and the root index.
-

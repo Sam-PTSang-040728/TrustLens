@@ -239,4 +239,11 @@ Client poll `GET /jobs/{job_id}`, dừng ở completed/failed/cancelled, không 
 
 ## 9. Versioning
 
+Current API prefix is `/api/v1`; current application version is `1.2.0`.
+`GET /api/v1/health` exposes `version`, `api_version`, and
+`scoring_version` for deployment and client compatibility checks.
+
+See [Versioning Policy](../governance/Versioning.md) for release, API, frontend,
+backend, and scoring version rules.
+
 Breaking change phải tạo `/api/v2` hoặc migration window, cập nhật frontend, OpenAPI, docs, compatibility test và changelog.
