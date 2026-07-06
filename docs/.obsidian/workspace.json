@@ -4,17 +4,21 @@
     "type": "split",
     "children": [
       {
-        "id": "6f6d9795e3c8c84d",
+        "id": "a061630c159b0e18",
         "type": "tabs",
         "children": [
           {
-            "id": "f9397af05e31bbf5",
+            "id": "7fe23abc6ffadee0",
             "type": "leaf",
             "state": {
-              "type": "empty",
-              "state": {},
+              "type": "markdown",
+              "state": {
+                "file": "docs/12-roadmap.md",
+                "mode": "source",
+                "source": false
+              },
               "icon": "lucide-file",
-              "title": "Tab mới"
+              "title": "12-roadmap"
             }
           }
         ]
@@ -49,7 +53,7 @@
             "state": {
               "type": "search",
               "state": {
-                "query": "",
+                "query": "error",
                 "matchingCase": true,
                 "explainSearch": false,
                 "collapseAll": false,
@@ -74,7 +78,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 239.5
+    "width": 331.5
   },
   "right": {
     "id": "0a7b13e8a04d6795",
@@ -182,43 +186,43 @@
       "publish:Xuất bản các thay đổi...": false
     }
   },
-  "active": "f9397af05e31bbf5",
+  "active": "7fe23abc6ffadee0",
   "lastOpenFiles": [
-    "project-info/Project Management Plan.md",
-    "project-info/project-members.md",
-    "project-info/Project Submission Checklist.md",
-    "architecture/README.md",
-    "00-project-overview/project-overview.md",
-    "01-requirements/srs.md",
-    "02-academic-evaluation/trust-score-formula.md",
-    "02-academic-evaluation/evaluation-criteria.md",
-    "README.md",
-    "SRS/13..md",
-    "SRS/11. Re.md",
-    "SRS/3. Specific Requirements/3.4 Non-functional Requirements.md",
-    "SRS/10..md",
-    "SRS/3. Specific Requirements/3.2 Functional Requirements.md",
-    "SRS/3. Specific Requirements/3.1 External Interface Requirements.md",
-    "~$Book1.tmp",
-    "SRS/Appendices/APP-M Navigation Map.md",
-    "SRS/FM-04. Table of Contents.md",
-    "SRS/FM-02. Revision History.md",
-    "SRS/FM-01. Document Control.md",
-    "SRS/TrustLens_SRS_v1.0.md",
-    "SRS/3. Specific Requirements/3. Spcific Requirements.md",
-    "SRS/6. Non-functional Requirements.md",
+    "docs/MIGRATION_NOTES.md",
+    "docs/07-data-model.md",
+    "docs/01-product-overview.md",
+    "docs/14-contributing.md",
+    "docs/13-known-gaps-and-decisions.md",
+    "docs/10-testing-and-quality.md",
+    "docs/06-architecture.md",
+    "docs/08-api-reference.md",
+    "docs/diagrams/data-model.md",
+    "docs/diagrams/component-architecture.md",
+    "docs/00-source-baseline.md",
+    "docs/diagrams/system-context.md",
+    "docs/diagrams/job-state.md",
+    "docs/diagrams/analysis-sequence.md",
+    "docs/diagrams/New Text Document.txt",
+    "TrustLens_Diagrams_v1.0.md",
+    "v1.2/requirements/SRS.md",
+    "SRS/Appendices/APP-G.2 Acceptance Test Matrix.md",
     "SRS/Appendices/APP-D API.md",
-    "SRS/9..md",
-    "SRS/5..md",
-    "SRS/1. Introduction.md",
-    "{B8563B9A-FC8B-4989-8E1B-201ED193BAB5}.tmp",
-    "{FF7719AA-C837-4F50-8E23-57B1B1EC96C9}.tmp",
-    "SRS/Appendices",
-    "SRS/3. Specific Requirements",
-    "TrustLens_Diagrams_v1.0.pdf",
-    "project-info",
-    "Các thuật toán, công nghệ và phần mềm tương tự TrustLens trên internet.docx",
-    "Nghiên cứu sâu về các hệ thống tương tự TrustLens.docx",
-    "SRS"
+    "v1.2/requirements/Use_Cases.md",
+    "v1.2/requirements/Traceability_Matrix.md",
+    "SRS/13..md",
+    "SRS/Appendices/APP-B.1 Use Case Exceptions.md",
+    "trash/02-academic-evaluation/trust-score-formula.md",
+    "trash/02-academic-evaluation/evaluation-criteria.md",
+    "trash/04-api-design/api-overview.md",
+    "v1.2/api/README.md",
+    "v1.2/archive/old-plans",
+    "v1.2/archive/legacy-srs",
+    "v1.2/competition",
+    "v1.2/archive",
+    "v1.2/operations",
+    "v1.2/testing",
+    "v1.2/api",
+    "v1.2/architecture/adr",
+    "v1.2/architecture/diagrams"
   ]
 }
