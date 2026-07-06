@@ -5,6 +5,8 @@
 **Rule:** source code is the source of truth for implemented behavior; roadmap and
 archive files must not be presented as implemented features.
 
+**Milestone status:** P0 critical remediation is completed; P1 pilot-readiness controls are implemented with documented caveats. See [P0/P1 completion status](planning/P0_P1_Completion_Status.md).
+
 ## Structure
 
 | Area | Documents |
@@ -17,7 +19,7 @@ archive files must not be presented as implemented features.
 | Security | [Security and privacy](security/Security_and_Privacy.md) |
 | Operations | [Deployment and operations](operations/Deployment_and_Operations.md) |
 | Testing | [Test plan and quality gates](testing/Test_Plan.md) |
-| Planning | [Roadmap](planning/Roadmap.md), [Known gaps and decisions](planning/Known_Gaps_and_Decisions.md) |
+| Planning | [P0/P1 completion status](planning/P0_P1_Completion_Status.md), [Roadmap](planning/Roadmap.md), [Known gaps and decisions](planning/Known_Gaps_and_Decisions.md) |
 | Governance | [Contributing](governance/Contributing.md) |
 | Archive | [Source baseline](archive/Source_Baseline.md), [Migration notes](archive/Migration_Notes.md), [Old plans](archive/old-plans/), [Reviews](archive/reviews/) |
 

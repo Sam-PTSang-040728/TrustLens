@@ -164,3 +164,14 @@ Still roadmap after this update:
 - Backup/restore automation and completed restore drill evidence.
 - Academic benchmark corpus, calibration report, and scoring changelog governance.
 - Accessibility audit and component tests.
+# Current milestone status - 2026-07-06
+
+For the authoritative P0/P1 completion matrix, see [P0/P1 completion status](P0_P1_Completion_Status.md).
+
+Summary:
+
+- P0 critical remediation is completed.
+- P1 database-backed durable queue, auth hardening, upload quarantine/scan gate, primary API pagination, readiness/metrics, retention purge scaffolding, CI scaffolding, and docs updates are implemented.
+- Items still open for full pilot sign-off are integration/security/E2E test suites, branch protection evidence, production malware scanner, restore drill evidence, academic benchmark/calibration, and accessibility/component test coverage.
+
+Any older line in this roadmap that says durable queue, auth hardening, upload scan, retention purge, or pagination is not implemented is superseded by this milestone status.

@@ -181,3 +181,17 @@ Not performed locally:
 
 - `pytest`: local environment did not have pytest installed before the new `requirements-dev.txt`; CI is configured to install it.
 - PostgreSQL Alembic upgrade: requires a running PostgreSQL instance.
+# Current P0/P1 verification status - 2026-07-06
+
+P0 verification status:
+
+- Completed: backend compile/import smoke, frontend lint, frontend build, canonical pipeline implementation, explicit mock mode, secret fail-fast, structured error contract.
+- Partial: PostgreSQL integration/security suites and browser E2E are not yet implemented.
+
+P1 verification status:
+
+- Completed locally: backend compile/import smoke, pilot control smoke, frontend lint/build.
+- Covered by new CI scaffolding: backend dependency install, Ruff, Alembic upgrade, pytest with coverage, pip audit, frontend `npm ci`, lint/build/audit, docs markdown lint.
+- Still requiring concrete suites/evidence: integration tests against PostgreSQL fixtures, ownership negative API tests, browser E2E smoke, restore drill, performance benchmark, accessibility audit, and academic calibration benchmark.
+
+See [P0/P1 completion status](../planning/P0_P1_Completion_Status.md) for the full status matrix.

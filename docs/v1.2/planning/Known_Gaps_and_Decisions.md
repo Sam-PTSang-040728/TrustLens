@@ -116,3 +116,22 @@ Partially remediated:
 New ADR:
 
 - ADR-008: For pilot readiness, TrustLens uses a database-backed queue in `processing_jobs`. This keeps deployment simple while providing restart-safe queued work, worker claim visibility, and retry metadata. A broker such as Redis/Celery can replace the queue later without changing the public API contract.
+# Current P0/P1 gap status - 2026-07-06
+
+For the authoritative completion matrix, see [P0/P1 completion status](P0_P1_Completion_Status.md).
+
+Superseded gap states:
+
+- GAP-004 is now completed for pilot through the database-backed `processing_jobs` queue.
+- GAP-009 is now partially remediated through password policy, rate limits, refresh rotation, replay rejection, and logout revocation.
+- GAP-011 is now partially remediated through quarantine, signature checks, local scan policy, and accepted-storage gate.
+- GAP-012 is now partially remediated through configurable retention defaults and purge dry-run/apply endpoint.
+- GAP-014 is now remediated for primary list APIs through the page contract.
+
+Still open or partial:
+
+- GAP-005 remains partial until PostgreSQL integration/security tests and browser E2E are present and required in branch protection.
+- GAP-010 remains open for CSP and HttpOnly Secure SameSite cookie strategy.
+- GAP-018 remains open until benchmark/calibration artifacts exist.
+- GAP-019 remains partial until report/UI disclaimer review is accepted.
+- GAP-020 remains open for full i18n/encoding cleanup.
