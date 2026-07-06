@@ -170,7 +170,9 @@ For the authoritative P0/P1 completion matrix, see [P0/P1 completion status](P0_
 
 Summary:
 
-- P0 critical remediation is completed.
+- P0 critical remediation has implementation evidence, but is not closed unconditionally
+  until PostgreSQL integration, ownership-negative, browser E2E and CI evidence are
+  attached to the release record.
 - P1 database-backed durable queue, auth hardening, upload quarantine/scan gate, primary API pagination, readiness/metrics, retention purge scaffolding, CI scaffolding, and docs updates are implemented.
 - Items still open for full pilot sign-off are integration/security/E2E test suites, branch protection evidence, production malware scanner, restore drill evidence, academic benchmark/calibration, and accessibility/component test coverage.
 
