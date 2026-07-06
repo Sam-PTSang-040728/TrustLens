@@ -43,8 +43,9 @@ pip install -r requirements.txt
 ```env
 PROJECT_NAME=TrustLens API
 API_V1_PREFIX=/api/v1
+APP_ENV=development
 DATABASE_URL=postgresql+psycopg://postgres:<password>@localhost:5432/trustlens_db
-SECRET_KEY=<strong-random-secret>
+SECRET_KEY=<strong-random-secret-at-least-32-characters>
 CORS_ORIGINS=http://localhost:5173
 UPLOAD_DIR=uploads
 MAX_UPLOAD_SIZE_MB=20
@@ -64,7 +65,7 @@ AI_PERSIST_RAW_INPUT=false
 AI_LOG_INPUT_TEXT=false
 ```
 
-Không dùng default secret ở staging/production.
+`SECRET_KEY` không có default trong source code. Development/test yêu cầu tối thiểu 32 ký tự; staging/production yêu cầu tối thiểu 48 ký tự và từ chối placeholder như `change-me`, `example`, hoặc `replace-*`.
 
 ### Migration và run
 
@@ -106,7 +107,7 @@ VITE_USE_MOCK=true
 npm run dev:mock
 ```
 
-Staging/production phải `VITE_USE_MOCK=false` và không fallback ngầm sang mock.
+Staging/production phải `VITE_USE_MOCK=false`, không fallback ngầm sang mock, và production build sẽ fail nếu `VITE_USE_MOCK=true`.
 
 Build:
 

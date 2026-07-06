@@ -81,13 +81,15 @@ QUEUED
 
 Failure state theo stage gồm `FAILED_VALIDATION`, `FAILED_EXTRACTION`, `FAILED_METADATA`, `FAILED_SCORING`, `FAILED_INTERNAL` và có thể `CANCELLED`.
 
-## 6. Hai pipeline không nhất quán
+## 6. Pipeline orchestration
 
-1. `run_analysis_pipeline`: pipeline thật, dùng bởi `/submissions/{id}/analyze`.
-2. `run_submission_processing_pipeline`: placeholder chỉ cập nhật trạng thái.
+`run_analysis_pipeline` is the canonical analysis pipeline used by:
 
-`/jobs/submissions/{id}/process` và retry đang gọi placeholder. Hệ quả: job có thể `COMPLETED` nhưng không có metadata, score/report. Quyết định: chỉ giữ một orchestration service; mọi endpoint analyze/process/retry phải gọi cùng command handler.
+1. `POST /submissions/{id}/analyze`.
+2. `POST /jobs/submissions/{id}/process` as a backward-compatible alias.
+3. `POST /jobs/{job_id}/retry` after creating a lineage-linked terminal retry job.
 
+`run_submission_processing_pipeline` remains only as a compatibility wrapper that delegates to `run_analysis_pipeline`; it must not mark jobs completed without a persisted report. A completed job must have `report_id`.
 ## 7. Background execution
 
 ### As-is: `BackgroundTasks`

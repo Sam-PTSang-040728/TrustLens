@@ -1,5 +1,20 @@
 # 08. API Reference
 
+## P0 remediation update - 2026-07-06
+
+The current v1.2 implementation supersedes older notes in this file where they conflict:
+
+- `POST /api/v1/submissions/{submission_id}/analyze` is the canonical orchestration endpoint.
+- `POST /api/v1/jobs/submissions/{submission_id}/process` is a backward-compatible alias that runs the same canonical analysis pipeline.
+- `POST /api/v1/jobs/{job_id}/retry` creates a new lineage-linked job only when the target job is terminal, then runs the same canonical analysis pipeline.
+- At most one active job may exist per submission. Active statuses are `QUEUED`, `VALIDATING`, `EXTRACTING`, `DETECTING_REFERENCES`, `PARSING_CITATIONS`, `NORMALIZING`, `VERIFYING_METADATA`, `SCORING`, and `BUILDING_REPORT`.
+- Latest job lookup uses `created_at desc limit 1`; it must not raise `MultipleResultsFound`.
+- Job status values are normalized to lower-case at the API boundary. A completed job must include `report_id`.
+- Frontend report navigation uses `/report/{report_id}`. It must not fall back from `report_id` to `submission_id`.
+- Reports can be read by `GET /api/v1/reports/{report_id}` or by the legacy submission route `GET /api/v1/reports/submissions/{submission_id}`.
+- Error responses are top-level objects: `{ "error_code": "...", "message": "...", "details": {}, "retryable": false, "correlation_id": "..." }`.
+- Mock data is available only when `VITE_USE_MOCK=true`; production builds fail if that flag is true.
+
 ## 1. Base URL
 
 ```text
@@ -114,13 +129,14 @@ Do FastAPI `HTTPException(detail={...})`, payload có thể nằm dưới `detai
 |---|---|---|---|---|
 | GET | `/jobs/{job_id}` | `report.view_own_scope` | Status | Implemented |
 | GET | `/jobs/submissions/{submission_id}/latest` | `report.view_own_scope` | Latest job | Implemented |
-| POST | `/jobs/{job_id}/retry` | `job.analyze` | Retry | Partial; placeholder pipeline |
-| POST | `/jobs/submissions/{submission_id}/process` | `job.analyze` | Process | Không canonical |
+| POST | `/jobs/{job_id}/retry` | `job.analyze` | Retry terminal job | Canonical pipeline |
+| POST | `/jobs/submissions/{submission_id}/process` | `job.analyze` | Backward-compatible process alias | Canonical pipeline |
 
 ### Reports/exports
 
 | Method | Path | Permission | Mô tả |
 |---|---|---|---|
+| GET | `/reports/{report_id}` | `report.view_own_scope` | Read report by report id |
 | GET | `/reports/submissions/{submission_id}` | `report.view_own_scope` | Read report |
 | POST | `/reports/submissions/{submission_id}/generate` | `job.analyze` | Read/generate theo service |
 | GET | `/reports/submissions/{id}/export/pdf` | `report.export` | Export PDF |

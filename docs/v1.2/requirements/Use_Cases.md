@@ -12,7 +12,7 @@
 | UC-06 | Quản lý assignment | Lecturer/Admin | Implemented |
 | UC-07 | Upload report | Lecturer/Admin | Implemented |
 | UC-08 | Analyze report | Lecturer/Admin | Implemented |
-| UC-09 | Theo dõi/retry job | Lecturer/Admin | Partial |
+| UC-09 | Theo dõi/retry job | Lecturer/Admin | Implemented |
 | UC-10 | Xem report | Lecturer/Admin | Implemented |
 | UC-11 | Export report | Lecturer/Admin | Implemented |
 | UC-12 | Dashboard | Lecturer/Admin | Implemented |
@@ -90,7 +90,7 @@
 
 Frontend poll `GET /jobs/{job_id}` mỗi 2 giây, dừng khi completed/failed/cancelled và chuyển report khi hoàn tất.
 
-**Sai lệch hiện tại:** retry gọi `run_submission_processing_pipeline`, là placeholder chỉ cập nhật trạng thái; chưa chắc tạo metadata, score và report như `run_analysis_pipeline`. Use case giữ trạng thái `Partial`.
+**P0 remediation:** retry is valid only for terminal jobs, creates a new job with `retry_of_job_id`, preserves lineage, and runs `run_analysis_pipeline`. `/jobs/submissions/{submission_id}/process` is a backward-compatible alias of the canonical pipeline. Completed jobs must include `report_id` so the frontend navigates to the real report.
 
 ## 9. UC-10 — Xem report
 
@@ -137,6 +137,6 @@ sequenceDiagram
     BG->>EMB: Relevance
     EMB-->>BG: Similarity/evidence
     BG->>DB: Score + Report + Audit
-    FE->>API: GET /reports/submissions/{id}
+    FE->>API: GET /reports/{report_id}
     API-->>FE: Report
 ```

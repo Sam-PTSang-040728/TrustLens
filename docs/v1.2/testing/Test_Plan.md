@@ -1,5 +1,24 @@
 # 10. Kiểm thử và Chất lượng
 
+## P0 remediation evidence - 2026-07-06
+
+Executed in this workspace:
+
+| Gate | Command | Result |
+|---|---|---|
+| Backend syntax/import compile | `python -m compileall app` | Pass |
+| Backend app startup import | `.\.venv\Scripts\python.exe -c "from app.main import fastapi_app; print(fastapi_app.version)"` | Pass, printed `1.2.0` |
+| Alembic head check | `.\.venv\Scripts\python.exe -m alembic heads` | Pass, head `f6a7b8c9d0e1` |
+| Frontend lint | `npm run lint` | Pass |
+| Frontend production build | `npm run build` | Pass; Vite chunk-size warning only |
+
+Not executed:
+
+- Backend unit tests: `pytest` is not installed in the backend `.venv` or system Python, and it is not listed in `requirements.txt`.
+- Backend PostgreSQL integration/security tests: suite not present in the repository yet.
+- Frontend unit/E2E tests: `package.json` has no `test` or `e2e` script.
+
+Release evidence status: P0 remediation code gates above pass, but full release-gate acceptance still requires adding backend dev test dependencies, integration/security suites, and browser E2E.
 ## 1. Bằng chứng hiện có
 
 Backend có unit test được nhận diện cho metadata status, relevance, weight invariance, scoring components, publication status, duplicate detection và DOI/metadata conflict.

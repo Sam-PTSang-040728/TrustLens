@@ -1,5 +1,19 @@
 # 13. Known Gaps và Quyết định Kiến trúc
 
+## P0 remediation status - 2026-07-06
+
+Remediated in implementation:
+
+- GAP-001: analyze, process alias and retry now use the canonical analysis pipeline.
+- GAP-002: frontend mock fallback is explicit-only through `VITE_USE_MOCK=true`; admin user mutations no longer fake success after backend failure.
+- GAP-003: backend `SECRET_KEY` has no source default and validates length/sample values with environment-aware fail-fast rules.
+- GAP-007: backend exception handlers normalize validation, HTTP and internal failures to a top-level error schema with `correlation_id`.
+
+Still open after P0 code remediation:
+
+- GAP-004: `BackgroundTasks` is still not a durable distributed queue.
+- GAP-005: PostgreSQL integration/security suites and browser E2E are not present yet.
+- GAP-008 to GAP-020 remain as previously listed unless separately closed.
 ## 1. ADR đã khóa
 
 ### ADR-001 — C1–C7 v1.2 là baseline
@@ -38,13 +52,13 @@ Weight, threshold, model hoặc logic có tác động phải tăng version.
 
 | ID | Mức | Gap | Tác động | Hành động |
 |---|---|---|---|---|
-| GAP-001 | Critical | Retry/process placeholder | Completed giả | Unified pipeline |
-| GAP-002 | Critical | Mock fallback | Thành công giả | Remove fallback |
-| GAP-003 | Critical | Default secret | Token compromise | Fail-fast |
+| GAP-001 | Critical | Retry/process placeholder | Fake completion | Remediated: unified canonical pipeline |
+| GAP-002 | Critical | Mock fallback | Fake success | Remediated: explicit mock mode only |
+| GAP-003 | Critical | Default secret | Token compromise | Remediated: startup fail-fast validator |
 | GAP-004 | High | Không durable queue | Mất job | Worker queue |
 | GAP-005 | High | Chưa xác nhận integration/E2E | Không đủ nghiệm thu | CI integration |
 | GAP-006 | High | C1–C8 docs vs C1–C7 code | Báo cáo sai | Migrate |
-| GAP-007 | High | Error schema lệch client/server | UI đọc sai lỗi | Global handler |
+| GAP-007 | High | Client/server error schema drift | UI may parse errors incorrectly | Remediated: global error handler |
 | GAP-008 | High | CORS rộng | Origin ngoài ý muốn | Allow-list |
 | GAP-009 | High | Password/rate-limit yếu | Account attack | Auth hardening |
 | GAP-010 | High | localStorage token | XSS impact | CSP/cookie strategy |

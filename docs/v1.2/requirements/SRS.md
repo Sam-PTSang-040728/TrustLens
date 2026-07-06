@@ -80,8 +80,8 @@
 | FR-JOB-005 | User phải đọc được job thuộc phạm vi quyền. | Must | Implemented |
 | FR-JOB-006 | Pipeline phải validate, extract, detect, parse, verify, score, build report. | Must | Implemented |
 | FR-JOB-007 | Lỗi phải có code/message/details có kiểm soát. | Must | Implemented |
-| FR-JOB-008 | Retry phải dùng pipeline chính và giữ lineage. | Must | Partial |
-| FR-JOB-009 | Hệ thống phải ngăn active job trùng hoặc bảo đảm idempotency. | Must | Partial/Unknown |
+| FR-JOB-008 | Retry phải dùng pipeline chính và giữ lineage. | Must | Implemented |
+| FR-JOB-009 | Hệ thống phải ngăn active job trùng hoặc bảo đảm idempotency. | Must | Implemented |
 | FR-JOB-010 | Production nên dùng durable queue/worker. | Should | Planned |
 | FR-JOB-011 | Hệ thống có thể phát realtime progress. | Could | Planned |
 
@@ -216,4 +216,7 @@ Không đặt SLA khi chưa có benchmark.
 
 ## 5. Release gate
 
+### P0 remediation note - 2026-07-06
+
+The codebase now has canonical analyze/process/retry pipeline behavior, one-active-job integrity, top-level error schema normalization, secret fail-fast validation, and explicit-only frontend mock mode. Full release readiness still depends on the release-gate evidence listed in `docs/v1.2/testing/Test_Plan.md`.
 Một release chỉ được ghi `Ready` khi migration chạy được, frontend build/lint pass, unit/integration/E2E cần thiết pass, ownership negative tests pass, không mock fallback, không default secret và docs khớp implementation.

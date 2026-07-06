@@ -1,5 +1,24 @@
 # 00. Source Baseline và Phương pháp Rà soát
 
+## P0 remediation snapshot - 2026-07-06
+
+Current workspace snapshots after remediation:
+
+- Root: `86f8bb38ffff66b6e6b23c597aca8c7619409bbf` plus working tree changes.
+- Backend: `bc0023ae37f28b3b1b833bc92c93c1bdb5f9c63a` plus working tree changes.
+- Frontend: `0dded036f2632ece4401b6bc1b2c219050c56815` plus working tree changes.
+
+Closed or updated baseline discrepancies:
+
+- GAP-003: process and retry no longer use a placeholder completion pipeline; they run the canonical analysis pipeline.
+- GAP-005: frontend user-management no longer falls back to mock after backend failure outside explicit mock mode.
+- GAP-007: backend `SECRET_KEY` no longer has a source-code default and is validated at startup.
+
+Still open:
+
+- GAP-002: `BackgroundTasks` remains non-durable.
+- GAP-006: integration/security/browser E2E release evidence is still missing.
+- GAP-008: OCR for PDF scan remains out of scope.
 ## 1. Mục tiêu
 
 Tài liệu này xác định bằng chứng dùng để viết lại `docs/`, đồng thời ngăn việc suy diễn từ kế hoạch cũ thành hiện trạng triển khai.
