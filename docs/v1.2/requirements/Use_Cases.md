@@ -140,3 +140,16 @@ sequenceDiagram
     FE->>API: GET /reports/{report_id}
     API-->>FE: Report
 ```
+# P1 pilot-readiness update - 2026-07-06
+
+Updated workflows:
+
+- UC-01/UC-02: Register/login/refresh are rate-limited. Refresh rotates the refresh token; logout revokes it.
+- UC-07: Upload now follows `validate size/type/signature -> save quarantine -> scan -> accepted storage -> create submission/job`.
+- UC-08: Analyze enqueues a persisted job and returns `202`; the worker process claims and runs the pipeline.
+- UC-09: Retry creates a lineage-linked queued job; worker execution is the same canonical pipeline.
+- UC-14: Admin can run retention purge as a dry run or apply operation through `/admin/retention/purge`.
+
+Operational actor:
+
+- Worker operator starts `python -m app.workers.tasks` and monitors `/health/metrics` for queue depth/age.

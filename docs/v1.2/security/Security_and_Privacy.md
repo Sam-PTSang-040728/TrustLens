@@ -111,3 +111,20 @@ TLS, secret manager, least-privilege DB, private object storage, authorized down
 ## 8. Nguyên tắc kết luận
 
 Request trả 200 nhưng lộ dữ liệu user khác vẫn là thất bại. UI báo thành công bằng mock khi backend thất bại vẫn là thất bại toàn vẹn.
+# P1 pilot-readiness update - 2026-07-06
+
+Implemented controls:
+
+- Password policy now requires at least `PASSWORD_MIN_LENGTH` characters, rejects common passwords, and rejects trivial repeated-character passwords.
+- `/auth/login`, `/auth/register`, and `/auth/refresh` have per-process rate limiting with `429` and `Retry-After`.
+- Refresh tokens are stored server-side as hashes, rotate on refresh, and can be revoked through `/auth/logout`.
+- Reuse of a rotated/revoked refresh token is rejected and audited as replay/revocation.
+- Uploads are stored in quarantine, checked by signature/magic bytes, scanned by local policy, and only then promoted to accepted storage.
+- Pipeline validation rejects files whose `scan_status` is not `clean` or whose `storage_state` is not `accepted`.
+- Retention purge is available through `POST /api/v1/admin/retention/purge`; `dry_run=true` is the default safety mode.
+
+Pilot caveats:
+
+- Current rate limiting is in-memory per API process. Multi-replica deployment should use Redis or another shared limiter.
+- The local scanner is a policy scanner for pilot wiring and catches EICAR test strings and Office macro markers. Production should integrate an approved malware scanner.
+- Frontend still stores tokens in browser storage; CSP and HttpOnly Secure SameSite cookie migration remain recommended hardening work.

@@ -1,0 +1,46 @@
+name: Backend CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/backend
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: trustlens_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      APP_ENV: test
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/trustlens_ci
+      SECRET_KEY: ci-secret-key-for-trustlens-that-is-long-enough-12345
+      RELEVANCE_PROVIDER: local
+      RELEVANCE_FALLBACK_PROVIDER: local
+      JOB_QUEUE_MODE: database
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: python -m pip install --upgrade pip
+      - run: pip install -r requirements-dev.txt
+      - run: ruff check app tests
+      - run: alembic upgrade head
+      - run: pytest --cov=app --cov-report=term-missing
+      - run: pip-audit -r requirements.txt

@@ -144,3 +144,23 @@ Containerization, CI/CD, autoscaling, object storage, WAF, SSO, secret rotation,
 - Multi-tenant khi chưa có isolation test.
 - Autoscaling khi job chưa durable.
 - Đổi weight không version/test.
+# P1 pilot-readiness update - 2026-07-06
+
+Moved from roadmap to implemented pilot baseline:
+
+- Database-backed durable worker queue using `processing_jobs`.
+- Auth hardening: stronger password policy, auth rate limits, refresh rotation, logout revocation.
+- File quarantine, magic-byte validation, and local scan policy.
+- Readiness/metrics endpoints and correlation ID middleware.
+- Primary list API pagination.
+- Retention purge service with safe dry-run default.
+- CI workflow scaffolding for backend, frontend, docs, and dependency updates.
+
+Still roadmap after this update:
+
+- Shared distributed rate limiter for multi-replica deployments.
+- Production malware scanner integration.
+- Browser E2E suite and PostgreSQL integration/security tests.
+- Backup/restore automation and completed restore drill evidence.
+- Academic benchmark corpus, calibration report, and scoring changelog governance.
+- Accessibility audit and component tests.

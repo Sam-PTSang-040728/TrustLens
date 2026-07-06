@@ -145,3 +145,42 @@ Chỉ tách extraction/OCR, metadata, NLP/GPU hoặc export khi có bằng chứ
 | Performance | Async orchestration, timeout |
 | Portability | Env config, migration, container target |
 | Privacy | Sanitized AI data, no raw logging mặc định |
+# P1 pilot-readiness update - 2026-07-06
+
+The implemented pilot architecture now uses a database-backed durable queue instead of FastAPI `BackgroundTasks` for canonical analysis execution.
+
+```mermaid
+flowchart TB
+    Browser[React Frontend]
+    API[FastAPI API]
+    Queue[(processing_jobs queue)]
+    Worker[TrustLens Worker]
+    Pipeline[Analysis Pipeline]
+    DB[(PostgreSQL)]
+    Quarantine[(Quarantine Storage)]
+    Accepted[(Accepted File Storage)]
+    Metadata[Crossref / OpenAlex]
+    Embedding[Gemini / Local Embedding]
+    Export[PDF / DOCX / XLSX]
+
+    Browser --> API
+    API --> DB
+    API --> Quarantine
+    API --> Accepted
+    API --> Queue
+    Worker --> Queue
+    Worker --> Pipeline
+    Pipeline --> DB
+    Pipeline --> Accepted
+    Pipeline --> Metadata
+    Pipeline --> Embedding
+    Export --> Accepted
+```
+
+Operational notes:
+
+- The queue is the `processing_jobs` table. `QUEUED` jobs are claimed by workers with row-level locking and `skip locked`.
+- Worker command: `python -m app.workers.tasks`.
+- `attempt_count`, `claimed_by`, `heartbeat_at`, and `next_run_at` support retry/recovery visibility.
+- API requests receive `x-correlation-id`; request completion is logged with method/path/status/duration.
+- Uploads move from quarantine to accepted storage only after local scan policy returns `clean`.

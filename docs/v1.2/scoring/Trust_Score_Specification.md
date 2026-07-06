@@ -142,3 +142,12 @@ Frontend định nghĩa `DEFAULT`, `SOURCE_FOCUS`, `RELEVANCE_FOCUS`. Việc pre
 ## 10. Khi nào tăng version
 
 Tăng version khi đổi weight, label threshold, component logic, aggregate, penalty, provider/model có tác động, calibration profile, source mapping hoặc duplicate threshold. Mỗi version cần changelog, test vector, benchmark summary và compatibility note.
+# P1 pilot-readiness update - 2026-07-06
+
+Trust Score remains `trust-score-v1.2`; no scoring weight or threshold change was made in this implementation.
+
+Pilot-readiness clarification:
+
+- Trust Score is a review-support signal, not an automated academic misconduct decision.
+- Any future calibration profile, threshold change, model change, provider weighting change, or aggregate/penalty logic change must increment the scoring version and add fixed test vectors.
+- Benchmark/calibration artifacts are still required before formal pilot claims about accuracy: dataset card, labeling guide, benchmark report, calibration profile, limitations, and scoring changelog.

@@ -220,3 +220,22 @@ Không đặt SLA khi chưa có benchmark.
 
 The codebase now has canonical analyze/process/retry pipeline behavior, one-active-job integrity, top-level error schema normalization, secret fail-fast validation, and explicit-only frontend mock mode. Full release readiness still depends on the release-gate evidence listed in `docs/v1.2/testing/Test_Plan.md`.
 Một release chỉ được ghi `Ready` khi migration chạy được, frontend build/lint pass, unit/integration/E2E cần thiết pass, ownership negative tests pass, không mock fallback, không default secret và docs khớp implementation.
+# P1 pilot-readiness update - 2026-07-06
+
+Requirements status changes implemented in code:
+
+- `FR-AUTH-008`: Implemented. `/auth/logout` revokes refresh tokens server-side.
+- `FR-AUTH-009`: Implemented for pilot. Register/login/refresh have per-process rate limits.
+- `FR-SUB-009`: Implemented for pilot. Uploads use quarantine, signature checks, local scan policy, and accepted storage promotion.
+- `FR-JOB-003`: Implemented through database-backed worker queue instead of `BackgroundTasks`.
+- `FR-JOB-010`: Implemented for pilot using `processing_jobs` as the durable queue. External broker remains optional future scaling work.
+- `NFR-PERF-002`: Implemented for primary list APIs through `{items,page,page_size,total,has_next}`.
+- `NFR-MNT-004`: Implemented at API middleware level with `x-correlation-id`.
+- `NFR-MNT-005`: Expanded with `/health/ready` and `/health/metrics`.
+- `NFR-PRI-005`: Implemented as configurable retention defaults and admin purge dry-run/apply endpoint.
+
+Pilot limitations that remain:
+
+- Rate limiting is process-local; multi-replica deployments need a shared limiter.
+- Local scan policy is not a full malware engine.
+- Human benchmark/calibration is still required before Trust Score is used for formal academic decisions.

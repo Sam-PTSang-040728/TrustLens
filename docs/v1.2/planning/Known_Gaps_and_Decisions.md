@@ -98,3 +98,21 @@ Weight, threshold, model hoặc logic có tác động phải tăng version.
 ## 5. Architectural consistency
 
 Hệ thống nhất quán khi có một API contract, một state machine, một pipeline, một scoring definition versioned, một permission vocabulary, một error schema, một mock policy, một ownership model và docs khớp code.
+# P1 pilot-readiness update - 2026-07-06
+
+Remediated in this implementation:
+
+- GAP-004: database-backed durable queue replaces `BackgroundTasks` for canonical analysis execution.
+- GAP-009: password policy and auth endpoint rate limits added.
+- GAP-011: quarantine, signature checks, local scan policy, and accepted storage gate added.
+- GAP-012: configurable retention and purge service added with dry-run default.
+- GAP-014: primary list APIs now use pagination.
+
+Partially remediated:
+
+- GAP-005: CI workflows and backend dev test dependencies added; PostgreSQL integration/security tests and browser E2E still need concrete suites.
+- Observability: correlation ID, readiness, and queue metrics are present; dashboards/alerts still need environment-specific setup.
+
+New ADR:
+
+- ADR-008: For pilot readiness, TrustLens uses a database-backed queue in `processing_jobs`. This keeps deployment simple while providing restart-safe queued work, worker claim visibility, and retry metadata. A broker such as Redis/Celery can replace the queue later without changing the public API contract.

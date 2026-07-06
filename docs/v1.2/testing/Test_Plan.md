@@ -154,3 +154,30 @@ Tách `requirements.txt` và `requirements-dev.txt`; bổ sung pytest, async/cov
 ## 11. Definition of Done
 
 Requirement ID, code review, unit/integration/negative authorization tests, migration, API docs, loading/error UI, không mock production, audit/observability phù hợp và không còn high/critical security warning chưa xử lý.
+# P1 pilot-readiness update - 2026-07-06
+
+Implemented quality gate assets:
+
+- `.github/workflows/backend-ci.yml`: install dev dependencies, lint with Ruff, apply Alembic migrations, run pytest with coverage, run dependency audit.
+- `.github/workflows/frontend-ci.yml`: `npm ci`, lint, build, and high-severity dependency audit.
+- `.github/workflows/docs-ci.yml`: markdown lint for docs.
+- `.github/dependabot.yml`: weekly pip, npm, and GitHub Actions updates.
+- `apps/backend/requirements-dev.txt`: pytest, coverage, Ruff, mypy, pip-audit.
+
+New test coverage:
+
+- `tests/unit/test_p1_pilot_readiness_controls.py`: password policy and local scan policy.
+
+Verification performed in this workspace:
+
+| Gate | Command | Result |
+|---|---|---|
+| Backend compile | `python -m compileall app tests` | Pass |
+| Backend import smoke | `python -c "from app.main import fastapi_app; print(fastapi_app.version)"` | Pass, `1.2.0` |
+| Pilot control smoke | `python -c "...is_password_strong_enough...scan_quarantined_file..."` | Pass |
+| Frontend build | `npm run build` | Pass, chunk-size warning only |
+
+Not performed locally:
+
+- `pytest`: local environment did not have pytest installed before the new `requirements-dev.txt`; CI is configured to install it.
+- PostgreSQL Alembic upgrade: requires a running PostgreSQL instance.

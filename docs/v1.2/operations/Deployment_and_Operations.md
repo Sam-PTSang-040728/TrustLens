@@ -239,3 +239,58 @@ Xác nhận dùng endpoint analyze/pipeline thật; kiểm tra job error và rep
 ### Provider unavailable
 
 Kiểm tra key/quota/rate limit/fallback; không chuyển thành kết luận nguồn giả.
+# P1 pilot-readiness update - 2026-07-06
+
+Backend setup now has separate runtime and development dependencies:
+
+```powershell
+cd apps/backend
+pip install -r requirements.txt       # runtime
+pip install -r requirements-dev.txt   # CI/local quality gate
+```
+
+Required pilot services:
+
+1. API process:
+
+   ```powershell
+   uvicorn app.main:app --reload
+   ```
+
+2. Database-backed worker:
+
+   ```powershell
+   python -m app.workers.tasks
+   ```
+
+3. Migrations:
+
+   ```powershell
+   alembic upgrade head
+   ```
+
+Important environment variables:
+
+```env
+JOB_QUEUE_MODE=database
+QUARANTINE_DIR=uploads/quarantine
+ACCEPTED_UPLOAD_DIR=uploads/accepted
+FILE_SCAN_MODE=strict
+FILE_SCAN_PROVIDER=local-policy-scanner
+DATA_RETENTION_DAYS=180
+EXPORT_RETENTION_DAYS=14
+AUDIT_RETENTION_DAYS=365
+```
+
+Health and operations endpoints:
+
+- `GET /api/v1/health`: process liveness.
+- `GET /api/v1/health/ready`: database and queue readiness.
+- `GET /api/v1/health/metrics`: queue status counts and oldest queued job age.
+- `POST /api/v1/admin/retention/purge?dry_run=true`: retention purge dry run.
+
+Runbook additions:
+
+- Queue stuck: check `/health/metrics`, confirm worker process is running, then run `python -m app.workers.tasks --once` to process one batch.
+- Scanner rejection: inspect `files.scan_status` and `files.scan_details`; rejected files must not be manually moved to accepted storage.
+- Refresh-token incident: revoke affected tokens by account and rotate `SECRET_KEY` only with a planned global logout window.

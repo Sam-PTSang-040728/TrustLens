@@ -1,5 +1,28 @@
 # 08. API Reference
 
+## P1 pilot-readiness update - 2026-07-06
+
+- `GET /api/v1/health/ready` returns readiness for database and queue.
+- `GET /api/v1/health/metrics` returns queue status counts and oldest queued job age.
+- `POST /api/v1/submissions/{submission_id}/analyze`, `POST /api/v1/jobs/submissions/{submission_id}/process`, and `POST /api/v1/jobs/{job_id}/retry` now enqueue a persisted `processing_jobs` row. A separate worker runs `python -m app.workers.tasks`.
+- `JOB_QUEUE_MODE=database` is the pilot default. `JOB_QUEUE_MODE=inline` is allowed only for local debugging.
+- Uploads are accepted only after extension, size, magic-byte signature, quarantine storage, and local scan policy pass. Files rejected by scan are not promoted to accepted storage.
+- Auth endpoints have per-process rate limiting. Refresh tokens rotate on `/auth/refresh`; reused/revoked refresh tokens are rejected. `POST /api/v1/auth/logout` revokes a refresh token server-side.
+- List endpoints use the page contract below: `/courses`, `/classes`, `/assignments`, `/classes/{class_identifier}/submissions`, `/admin/users`, and `/admin/audit-logs`.
+- `POST /api/v1/admin/retention/purge?dry_run=true` runs the configured purge policy; `dry_run` defaults to `true`.
+
+Paginated response:
+
+```json
+{
+  "items": [],
+  "page": 1,
+  "page_size": 20,
+  "total": 0,
+  "has_next": false
+}
+```
+
 ## P0 remediation update - 2026-07-06
 
 The current v1.2 implementation supersedes older notes in this file where they conflict:

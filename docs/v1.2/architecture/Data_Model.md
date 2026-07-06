@@ -201,3 +201,22 @@ Một số entity có dấu hiệu soft delete. Cần chuẩn hóa:
 - Chưa có consent/legal basis model.
 - Chưa benchmark dataset/model registry.
 - Một số model skeleton có thể chưa được endpoint sử dụng.
+# P1 pilot-readiness update - 2026-07-06
+
+New or expanded runtime fields:
+
+- `refresh_tokens`: stores hashed refresh tokens, `jti`, expiry, revocation time/reason, and rotation lineage.
+- `files.storage_state`: `quarantine`, `accepted`, or rejected states; analysis requires `accepted`.
+- `files.scan_status`: `pending`, `clean`, `suspicious`, `infected`, or `failed`; analysis requires `clean`.
+- `files.scan_provider`, `scan_signature_version`, `scanned_at`, `scan_details`: scan provenance and audit evidence.
+- `processing_jobs.attempt_count`, `claimed_by`, `heartbeat_at`, `next_run_at`: database-backed queue claim/retry/recovery metadata.
+
+Retention defaults for pilot configuration:
+
+| Data | Default |
+|---|---:|
+| Source submission/file data | 180 days after soft delete |
+| Export files | 14 days |
+| Audit records | 365 days target; purge keeps audit separate from business data deletion |
+
+The purge service removes expired export files and soft-deleted submission source files from physical storage when `dry_run=false`.
