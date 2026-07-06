@@ -33,7 +33,7 @@ jobs:
       RELEVANCE_FALLBACK_PROVIDER: local
       JOB_QUEUE_MODE: database
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: recursive
           fetch-depth: 0
