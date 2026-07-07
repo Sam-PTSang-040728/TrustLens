@@ -1,197 +1,160 @@
-# 10. Kiểm thử và Chất lượng
+﻿# Test Plan and Quality Gates
 
-## P0 remediation evidence - 2026-07-06
+**Status:** source-aligned v1.2 baseline
 
-Executed in this workspace:
+Do not mark a capability `Verified` only because a test file or workflow file exists.
+Verification requires executed evidence.
 
-| Gate | Command | Result |
+## 1. Evidence Currently Available
+
+| Evidence | Status | Notes |
 |---|---|---|
-| Backend syntax/import compile | `python -m compileall app` | Pass |
-| Backend app startup import | `.\.venv\Scripts\python.exe -c "from app.main import fastapi_app; print(fastapi_app.version)"` | Pass, printed `1.2.0` |
-| Alembic head check | `.\.venv\Scripts\python.exe -m alembic heads` | Pass, head `f6a7b8c9d0e1` |
-| Frontend lint | `npm run lint` | Pass |
-| Frontend production build | `npm run build` | Pass; Vite chunk-size warning only |
+| Backend compile/import smoke | Available historically; rerun required for current change | `python -m compileall app tests` is the intended command. |
+| Frontend lint | Available historically; rerun required for current change | `npm run lint`. |
+| Frontend build | Available historically; rerun required for current change | `npm run build`. |
+| CI workflow scaffolding | Implemented | Backend, frontend, docs workflows exist. |
+| Backend unit test files | Implemented | Unit tests exist for scoring, metadata, relevance, duplicate/conflict, and pilot controls. |
+| Backend dev dependencies | Implemented | `requirements-dev.txt` includes test/lint tooling. |
 
-Not executed:
+## 2. Evidence Not Yet Sufficient
 
-- Backend unit tests: `pytest` is not installed in the backend `.venv` or system Python, and it is not listed in `requirements.txt`.
-- Backend PostgreSQL integration/security tests: suite not present in the repository yet.
-- Frontend unit/E2E tests: `package.json` has no `test` or `e2e` script.
-
-Release evidence status: P0 remediation code gates above pass, but full release-gate acceptance still requires adding backend dev test dependencies, integration/security suites, and browser E2E.
-## 1. Bằng chứng hiện có
-
-Backend có unit test được nhận diện cho metadata status, relevance, weight invariance, scoring components, publication status, duplicate detection và DOI/metadata conflict.
-
-Chưa đủ bằng chứng để khẳng định:
-
-- Toàn bộ test pass.
-- Có PostgreSQL integration test.
-- Có frontend-backend E2E.
-- Có security/performance test.
-- Có CI gate.
-
-`pytest` không xuất hiện trong `requirements.txt` được rà soát; dev dependencies cần chuẩn hóa.
-
-## 2. Test pyramid
-
-### Unit
-
-Parser, normalization, metadata status, candidate matching, C1–C7, label boundaries, duplicate, penalty, permission mapping và state transition.
-
-### Integration
-
-API + PostgreSQL, migration, storage, background pipeline, provider adapter với mock server, export, ownership và audit.
-
-### E2E
-
-Login → course → class → assignment → upload → analyze → poll → report → export → retry → cross-user negative case.
-
-## 3. Fixture tối thiểu
-
-| Fixture | Mục tiêu |
+| Gap | Release status |
 |---|---|
-| PDF text layer | Happy path |
-| DOCX | Happy path |
-| PDF scan | Lỗi OCR chưa hỗ trợ |
-| PDF encrypted/malformed | Validation |
-| Không references | Detection failure |
-| APA/IEEE | Parser/style |
-| Thiếu năm | C1/C5 |
-| DOI đúng | C2 |
-| DOI conflict | Conflict |
-| URL sống phi học thuật | C2/C3 |
-| Provider timeout | Degrade |
-| Duplicate DOI | C7 |
-| Fuzzy duplicate | C7 |
-| Tiếng Việt/Anh | Relevance |
-| File >20 MB | Limit |
-| MIME spoof | Security |
+| PostgreSQL integration suite | Blocked |
+| Ownership negative suite | Blocked |
+| Browser E2E | Blocked |
+| Restore drill | Blocked |
+| Performance benchmark | Planned |
+| Accessibility audit | Planned |
+| Academic calibration | Planned |
+| Full error-schema contract coverage | Partial |
+| Worker crash/concurrency/stale recovery evidence | Partial |
 
-## 4. Acceptance flow P0
+## 3. Release Gate
+
+Required release-gate commands/evidence:
 
 ```text
-Register/Login
-→ Course
-→ Class
-→ Assignment
-→ Upload PDF/DOCX
-→ Analyze
-→ Poll real progress
-→ Real C1-C7 report
-→ Export PDF/DOCX/XLSX
+ruff
+pytest
+alembic upgrade head
+PostgreSQL integration
+ownership negative tests
+frontend lint/build
+browser E2E
+secret/dependency scan
+restore evidence
 ```
 
-Flow chỉ pass khi không mock, dữ liệu lưu DB, có scoring version, ownership/audit đúng, export mở được và retry dùng pipeline thật.
+## 4. Backend Gate
 
-## 5. Regression quan trọng
+Minimum command set:
 
-### Score invariance
+```powershell
+cd apps/backend
+python -m compileall app tests
+ruff check app tests
+pytest
+alembic heads
+```
 
-- Tổng weight 100.
-- Config invalid fallback an toàn.
-- Boundary 49.99/50/69.99/70/84.99/85.
-- Confidence không làm thay score ngoài thiết kế.
-- Provider unavailable không thành “fake”.
+With a running PostgreSQL instance:
 
-### Ownership
+```powershell
+alembic upgrade head
+```
 
-Lecturer B không được truy cập class, assignment, submission, job, report và export của lecturer A.
+Integration tests should cover:
 
-### Retry
+- auth register/login/refresh/logout;
+- public register role-safety blocker once fixed;
+- course/class/assignment ownership;
+- upload validation and scan states;
+- analyze enqueue and worker processing;
+- job polling and retry lineage;
+- report/export authorization;
+- retention dry-run/apply;
+- provider unavailable and `NOT_FOUND` semantics;
+- error schema and correlation ID.
 
-Job thất bại → sửa nguyên nhân → retry tạo job mới → pipeline thật → report → giữ lineage.
+## 5. Frontend Gate
 
-### Provider degradation
+Minimum command set:
 
-Primary timeout → fallback → evidence ghi rõ → confidence giảm → không kết luận tuyệt đối.
-
-## 6. Frontend gate
-
-Lệnh hiện có:
-
-```bash
+```powershell
+cd apps/frontend
+npm ci
 npm run lint
 npm run build
 ```
 
-Cần bổ sung component/service tests, route guard test, contract test, accessibility và browser E2E. Không fallback mock ngoài mock mode.
+Required future suites:
 
-## 7. Backend gate đề xuất
+- service/client contract tests;
+- route guard tests;
+- upload/analyze/report component tests;
+- browser E2E in backend mode;
+- accessibility smoke/audit;
+- no production fallback to mock mode.
 
-Tách `requirements.txt` và `requirements-dev.txt`; bổ sung pytest, async/cov, API test client, lint/format/type-check. Tool cụ thể là quyết định developer guide, không phải SRS.
+## 6. Core E2E Flow
 
-## 8. CI gate
+The core flow is not `Verified` until it runs against backend mode and a real database:
 
-1. Secret scan.
-2. Backend lint/type/unit.
-3. Migration up.
-4. Integration.
-5. Frontend install/lint/build.
-6. E2E smoke.
-7. Dependency audit.
-8. Docs link/markdown check.
-9. Artifact report.
+```text
+Register/Login
+-> Course
+-> Class
+-> Assignment
+-> Upload PDF/DOCX
+-> Analyze
+-> Poll persisted job
+-> Worker builds C1-C7 report
+-> Export PDF/DOCX/XLSX
+-> Retry failed terminal job
+-> Cross-user negative access denied
+```
 
-## 9. Performance
+## 7. Fixture Matrix
 
-Đo theo file size, pages, citations, provider latency, embedding provider, concurrent jobs và export format. Không đặt SLA trước benchmark; báo cáo phải nêu hardware, dataset và percentile.
+| Fixture | Purpose |
+|---|---|
+| Text-layer PDF | Happy path extraction. |
+| DOCX | Happy path extraction. |
+| Scanned/image-only PDF | Clear OCR-not-supported failure. |
+| Malformed/encrypted PDF | Validation/extraction failure. |
+| Missing reference section | Detection failure. |
+| APA/IEEE references | Style and parsing coverage. |
+| Missing year | C1/C5 behavior. |
+| Valid DOI | C2 verified path. |
+| DOI metadata conflict | Conflict evidence and penalty. |
+| URL-only non-academic source | URL-only semantics. |
+| Provider timeout | Provider unavailable behavior. |
+| Duplicate DOI/URL/title | C7 behavior. |
+| Vietnamese/English report text | C4 relevance. |
+| Oversize file | Upload limit. |
+| MIME spoof | Upload security. |
+| EICAR sample | Scanner integration once production scanner exists. |
 
-## 10. Risk
+## 8. Regression Rules
 
-| Risk | Mức | Kiểm soát |
-|---|---|---|
-| Placeholder retry | Critical | Unified pipeline + E2E |
-| Mock fallback | High | Fail loudly |
-| No durable queue | High | Worker queue |
-| Parser variability | High | Fixture corpus |
-| Provider instability | High | Stub/fallback/circuit breaker |
-| Score bias | High | Human benchmark |
-| Missing integration | High | CI gate |
-| Default secret | Critical | Fail-fast |
-| PDF scan unsupported | Medium | UX/OCR roadmap |
+- Trust Score weights sum to 100.
+- Boundaries at 49.99/50/69.99/70/84.99/85 are covered.
+- Confidence does not silently change score semantics.
+- `PROVIDER_UNAVAILABLE` is not treated as `NOT_FOUND`.
+- URL reachability is not academic verification.
+- Public registration does not create active lecturers once fixed.
+- Retry creates a new job and preserves lineage.
+- Completed analysis jobs have `report_id`.
 
-## 11. Definition of Done
+## 9. Documentation Gate
 
-Requirement ID, code review, unit/integration/negative authorization tests, migration, API docs, loading/error UI, không mock production, audit/observability phù hợp và không còn high/critical security warning chưa xử lý.
-# P1 pilot-readiness update - 2026-07-06
+Documentation is in scope for release quality. Run:
 
-Implemented quality gate assets:
+```powershell
+git diff --check
+git grep -n "<old eight-component scoring term>"
+git grep -n "<unconditional production claim>"
+```
 
-- `.github/workflows/backend-ci.yml`: install dev dependencies, lint with Ruff, apply Alembic migrations, run pytest with coverage, run dependency audit.
-- `.github/workflows/frontend-ci.yml`: `npm ci`, lint, build, and high-severity dependency audit.
-- `.github/workflows/docs-ci.yml`: markdown lint for docs.
-- `.github/dependabot.yml`: weekly pip, npm, and GitHub Actions updates.
-- `apps/backend/requirements-dev.txt`: pytest, coverage, Ruff, mypy, pip-audit.
-
-New test coverage:
-
-- `tests/unit/test_p1_pilot_readiness_controls.py`: password policy and local scan policy.
-
-Verification performed in this workspace:
-
-| Gate | Command | Result |
-|---|---|---|
-| Backend compile | `python -m compileall app tests` | Pass |
-| Backend import smoke | `python -c "from app.main import fastapi_app; print(fastapi_app.version)"` | Pass, `1.2.0` |
-| Pilot control smoke | `python -c "...is_password_strong_enough...scan_quarantined_file..."` | Pass |
-| Frontend build | `npm run build` | Pass, chunk-size warning only |
-
-Not performed locally:
-
-- `pytest`: local environment did not have pytest installed before the new `requirements-dev.txt`; CI is configured to install it.
-- PostgreSQL Alembic upgrade: requires a running PostgreSQL instance.
-# Current P0/P1 verification status - 2026-07-06
-
-P0 verification status:
-
-- Completed: backend compile/import smoke, frontend lint, frontend build, canonical pipeline implementation, explicit mock mode, secret fail-fast, structured error contract.
-- Partial: PostgreSQL integration/security suites and browser E2E are not yet implemented.
-
-P1 verification status:
-
-- Completed locally: backend compile/import smoke, pilot control smoke, frontend lint/build.
-- Covered by new CI scaffolding: backend dependency install, Ruff, Alembic upgrade, pytest with coverage, pip audit, frontend `npm ci`, lint/build/audit, docs markdown lint.
-- Still requiring concrete suites/evidence: integration tests against PostgreSQL fixtures, ownership negative API tests, browser E2E smoke, restore drill, performance benchmark, accessibility audit, and academic calibration benchmark.
-
-See [P0/P1 completion status](../planning/P0_P1_Completion_Status.md) for the full status matrix.
+Markdown links and internal references should be checked before release.

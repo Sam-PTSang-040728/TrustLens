@@ -1,25 +1,37 @@
-# 07. Mô hình Dữ liệu Logic
+﻿# Logical Data Model
 
-## 1. Mục tiêu
+**Status:** source-aligned v1.2 baseline
 
-Mô hình phải truy vết được:
+## 1. Traceability
+
+TrustLens data must remain traceable through this chain:
 
 ```text
-Ai → lớp/assignment nào → file/submission/job nào
-→ citation/metadata nào → scoring version nào
-→ report/export nào
+User
+-> Course/Class/Assignment
+-> File/Submission
+-> ProcessingJob
+-> ExtractedDocument/ReferenceSection
+-> Citation/MetadataRecord
+-> CitationScore/Warning
+-> Report/ReportExport
 ```
 
-## 2. Nhóm thực thể
+## 2. Entity Groups
 
 ### Identity
 
 - `User`
 - `UserProfile`
 - `RolePermission`
+- `RefreshToken`
 - `AuditLog`
 
-### Academic
+Public self-registration currently creates an active lecturer account. Registration
+approval fields must not be documented as implemented until migrations, services,
+API, and tests exist.
+
+### Academic Scope
 
 - `Course`
 - `ClassModel`
@@ -27,9 +39,10 @@ Ai → lớp/assignment nào → file/submission/job nào
 - `Term`
 - `Student`
 
-`Student` và `Term` có model nhưng mức sử dụng trong endpoint baseline cần xác nhận thêm.
+Lecturer access is scoped through owned classes/assignments. Admin scope is system
+wide in the current baseline. Multi-tenancy is not implemented.
 
-### Submission
+### Submission and Processing
 
 - `File`
 - `Submission`
@@ -37,14 +50,14 @@ Ai → lớp/assignment nào → file/submission/job nào
 - `ExtractedDocument`
 - `ReferenceSection`
 
-### Citation/metadata
+### Citation and Metadata
 
 - `Citation`
 - `CitationField`
 - `MetadataProvider`
 - `MetadataRecord`
 
-### Scoring/report
+### Scoring and Report
 
 - `ScoreComponent`
 - `TrustScore`
@@ -54,7 +67,7 @@ Ai → lớp/assignment nào → file/submission/job nào
 - `Report`
 - `ReportExport`
 
-## 3. Quan hệ logic
+## 3. Logical Relationships
 
 ```mermaid
 erDiagram
@@ -82,141 +95,98 @@ erDiagram
     REPORT }o--|| PROCESSING_JOB : generated_by
 ```
 
-## 4. Quy tắc toàn vẹn
+## 4. Queue Fields
 
-### Identity
+`ProcessingJob` includes the queue and retry fields required by the current
+database-backed worker baseline:
 
-- Email duy nhất sau chuẩn hóa.
-- Role thuộc tập hỗ trợ.
-- User inactive không lấy token mới.
-- Permission backend là nguồn kiểm soát.
-
-### Ownership học thuật
-
-- Class có một `lecturer_id`.
-- Assignment thuộc một class.
-- Lecturer chỉ truy cập scope mình sở hữu.
-- Admin có phạm vi toàn hệ thống hiện tại.
-- Khi bổ sung tenant, mọi thực thể nghiệp vụ phải tenant-scoped và được test isolation.
-
-### File
-
-File phải có original name, stored name/path, MIME, size, checksum, uploader và timestamp. Path không nhận trực tiếp từ client; tên lưu không đoán được; phải đối soát record với file vật lý.
-
-### Submission
-
-- Thuộc assignment hợp lệ.
-- File tồn tại.
-- Xóa không để report/export mồ côi.
-- Status phải đồng bộ job/report.
-
-### ProcessingJob
-
-- Thuộc một submission.
-- Retry liên kết job cũ.
-- Progress 0–100.
-- Chỉ chuyển trạng thái hợp lệ.
-- Completed phải có report hoặc lý do rõ nếu loại job không tạo report.
-- Cần idempotency/unique rule cho active jobs.
-
-### Citation
-
-- `sequence_no` giữ thứ tự.
-- Raw text được giữ để audit parser.
-- DOI/URL chuẩn hóa nhưng không làm mất bản gốc.
-- Reprocessing phải có replace/version strategy.
-
-### Metadata
-
-- Ghi provider, query, status, confidence, evidence.
-- `PROVIDER_UNAVAILABLE` khác `NOT_FOUND`.
-- Raw response cần size/retention policy.
-- Không trộn record giữa submission.
-
-### Scoring
-
-- Config versioned.
-- Tổng weight bằng 100.
-- Report lưu scoring version.
-- Warning có code/severity/recommendation.
-- Không sửa ngược report lịch sử khi đổi thuật toán.
-
-### Report/export
-
-- Report thuộc submission và liên kết job.
-- Export thuộc report.
-- Download kiểm tra quyền ngược tới class owner.
-- File export mất phải trả lỗi rõ và có thể tái tạo theo policy.
-
-## 5. State machine đề xuất
-
-| State | Ý nghĩa |
+| Field | Purpose |
 |---|---|
-| `QUEUED` | Đã tạo job |
-| `VALIDATING` | Kiểm tra file/context |
-| `EXTRACTING` | Trích xuất text |
-| `DETECTING_REFERENCES` | Xác định danh mục |
-| `PARSING_CITATIONS` | Tách citation |
-| `NORMALIZING` | Chuẩn hóa |
-| `VERIFYING_METADATA` | Đối chiếu provider |
-| `SCORING` | Tính điểm |
-| `BUILDING_REPORT` | Tạo report |
-| `COMPLETED` | Hoàn tất |
-| `FAILED_*` | Lỗi theo stage |
-| `CANCELLED` | Bị hủy |
+| `status` | Queue/pipeline state. |
+| `progress` | 0-100 progress. |
+| `step` / `current_step` | Human-readable current stage. |
+| `attempt_count` | Claim/retry attempt visibility. |
+| `claimed_by` | Worker identity. |
+| `heartbeat_at` | Worker liveness signal. |
+| `next_run_at` | Retry/stale scheduling. |
+| `retry_of_job_id` | Retry lineage. |
+| `report_id` | Completed job report link. |
+| `error_code`, `error_message`, `error_details` | Structured failure evidence. |
 
-Không nên duy trì đồng thời state rút gọn và chi tiết nếu không có mapping chuẩn.
+Active job uniqueness is enforced for active pipeline states so one submission does
+not have multiple active analysis jobs.
 
-## 6. Soft delete và retention
+## 5. File Security Fields
 
-Một số entity có dấu hiệu soft delete. Cần chuẩn hóa:
+`File` records include:
 
-- `deleted_at`, `deleted_by`.
-- Query mặc định loại record đã xóa.
-- Retention window.
-- Restore policy.
-- Purge file vật lý.
-- Audit tối thiểu được giữ.
+| Field | Purpose |
+|---|---|
+| `storage_state` | Quarantine/accepted/rejected-style lifecycle state. |
+| `scan_status` | Pending/clean/suspicious/infected/failed-style scan result. |
+| `scan_provider` | Scan policy/provider name. |
+| `scan_signature_version` | Signature/policy version. |
+| `scanned_at` | Scan timestamp. |
+| `scan_details` | Scan evidence/details. |
+| `checksum` | Integrity/deduplication support. |
+| `mime_type` | Server-recorded MIME. |
+| `size_bytes` | Server-recorded size. |
+| `stored_path` | Server-controlled storage location. |
 
-## 7. Dữ liệu nhạy cảm
+Analysis requires accepted storage and clean scan status.
 
-| Dữ liệu | Mức | Kiểm soát |
-|---|---|---|
-| Password hash | Cao | Không return/log |
-| Token | Cao | Redact, expiry, revoke |
-| File report | Cao | Ownership, encryption, retention |
-| Extracted text | Cao | Data minimization |
-| Public metadata | Trung bình | Provenance/cache policy |
-| Audit | Cao | Restricted access |
-| AI request/evidence | Cao | Không raw log |
-| Score/report | Trung bình-Cao | Ownership + explainability |
+## 6. State Model
 
-## 8. Khoảng trống
+Pipeline states:
 
-- Chưa tenant.
-- Chưa batch entities trong implementation.
-- Chưa durable queue metadata.
-- Retention chưa khóa.
-- Chưa xác nhận object storage abstraction.
-- Chưa có consent/legal basis model.
-- Chưa benchmark dataset/model registry.
-- Một số model skeleton có thể chưa được endpoint sử dụng.
-# P1 pilot-readiness update - 2026-07-06
+```text
+QUEUED
+-> VALIDATING
+-> EXTRACTING
+-> DETECTING_REFERENCES
+-> PARSING_CITATIONS
+-> NORMALIZING
+-> VERIFYING_METADATA
+-> SCORING
+-> BUILDING_REPORT
+-> COMPLETED
+```
 
-New or expanded runtime fields:
+Failure states:
 
-- `refresh_tokens`: stores hashed refresh tokens, `jti`, expiry, revocation time/reason, and rotation lineage.
-- `files.storage_state`: `quarantine`, `accepted`, or rejected states; analysis requires `accepted`.
-- `files.scan_status`: `pending`, `clean`, `suspicious`, `infected`, or `failed`; analysis requires `clean`.
-- `files.scan_provider`, `scan_signature_version`, `scanned_at`, `scan_details`: scan provenance and audit evidence.
-- `processing_jobs.attempt_count`, `claimed_by`, `heartbeat_at`, `next_run_at`: database-backed queue claim/retry/recovery metadata.
+```text
+FAILED_VALIDATION
+FAILED_EXTRACTION
+FAILED_METADATA
+FAILED_SCORING
+FAILED_INTERNAL
+CANCELLED
+```
 
-Retention defaults for pilot configuration:
+Completed analysis jobs must have a persisted `report_id`. If a future job type does
+not build a report, it must use a separate explicit contract.
 
-| Data | Default |
-|---|---:|
-| Source submission/file data | 180 days after soft delete |
-| Export files | 14 days |
-| Audit records | 365 days target; purge keeps audit separate from business data deletion |
+## 7. Integrity Rules
 
-The purge service removes expired export files and soft-deleted submission source files from physical storage when `dry_run=false`.
+- Email is unique after normalization.
+- Inactive users must not authenticate.
+- Lecturer access is limited to owned academic scope.
+- Admin has system-wide scope in v1.2.
+- File paths are server-generated and must not come directly from clients.
+- Citation raw text is preserved for parser review.
+- Metadata records keep provider, query, status, confidence, evidence, and raw
+  provider response subject to retention policy.
+- `PROVIDER_UNAVAILABLE` is distinct from `NOT_FOUND`.
+- Reports store scoring/config version and must not be retroactively mutated when
+  scoring logic changes.
+
+## 8. Open Data-Model Gaps
+
+| Gap | Status |
+|---|---|
+| Registration approval lifecycle fields | Planned |
+| Tenant isolation | Planned |
+| Formal legal-basis/consent model | Planned |
+| Restore evidence and DB-file reconciliation evidence | Blocked |
+| Benchmark dataset/model registry | Planned |
+| Production object storage abstraction | Planned |

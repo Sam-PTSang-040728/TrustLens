@@ -1,126 +1,139 @@
-# 01. Tổng quan Sản phẩm TrustLens
+﻿# TrustLens Product Overview
 
-## 1. Bài toán
+**Status:** source-aligned v1.2 baseline
 
-Giảng viên và người đánh giá báo cáo thường phải kiểm tra thủ công danh mục tài liệu tham khảo để xác định:
+## 1. Problem
 
-- Tài liệu có tồn tại và truy vết được hay không.
-- Metadata citation có khớp nguồn học thuật hay không.
-- Nguồn có phù hợp chủ đề và đủ cập nhật hay không.
-- Danh mục có sai style, trùng lặp hoặc tập trung quá mức không.
+Lecturers and reviewers often need to inspect reference lists manually to understand:
 
-TrustLens hỗ trợ sàng lọc và thẩm định các tín hiệu này; hệ thống không thay thế phán đoán học thuật của chuyên gia.
+- whether cited sources can be traced;
+- whether citation metadata matches known academic records;
+- whether sources are relevant and reasonably current;
+- whether the reference list has style, duplicate, or concentration risks.
 
-## 2. Tuyên bố giá trị
+TrustLens supports this review. It does not replace expert academic judgment.
 
-TrustLens tiếp nhận PDF/DOCX, trích xuất tài liệu tham khảo, đối chiếu metadata, chấm điểm có giải thích và tạo report gồm:
+## 2. Value Proposition
 
-- Bằng chứng metadata.
-- Trust Score và Confidence Score.
-- Cảnh báo và khuyến nghị.
-- Kết quả theo từng citation.
-- Export PDF, DOCX, XLSX.
+TrustLens accepts PDF/DOCX submissions, extracts reference lists, verifies available
+metadata, calculates an explainable Trust Score, and generates reports with:
 
-## 3. Người dùng
+- metadata evidence;
+- Trust Score and confidence;
+- warnings and recommendations;
+- per-citation evidence;
+- PDF, DOCX, and XLSX exports.
 
-| Nhóm | Nhu cầu | Trạng thái |
+## 3. Users
+
+| Group | Need | Status |
 |---|---|---|
-| Giảng viên | Quản lý lớp/assignment, upload, analyze, report | Implemented |
-| Quản trị viên | User/provider/audit/AI diagnostics | Implemented/Partial |
-| Sinh viên | Tự nộp bài và xem phản hồi | Deferred |
-| QA/vận hành | Theo dõi lỗi, test pipeline, provider | Partial |
-| LMS | Đồng bộ lớp, assignment, submission | Planned |
+| Lecturer | Manage classes/assignments, upload, analyze, review reports. | Implemented |
+| Admin | Manage users/providers/audit and diagnostics. | Implemented/Partial |
+| Student | Submit work and view feedback. | Planned |
+| QA/operator | Monitor failures, tests, providers, workers. | Partial |
+| LMS | Synchronize classes, assignments, and submissions. | Planned |
 
-## 4. Năng lực hiện tại
+## 4. Current Capabilities
 
-### Quản lý học thuật
+### Academic Management
 
-- Tạo/liệt kê học phần.
-- Tạo, cập nhật, xóa, liệt kê lớp.
-- Tạo, cập nhật, liệt kê assignment.
-- Giới hạn theo giảng viên sở hữu hoặc admin.
+- Create/list courses.
+- Create, update, delete, and list classes.
+- Create, update, and list assignments.
+- Enforce lecturer ownership or admin scope.
 
-### Tiếp nhận tài liệu
+### Upload
 
-- Nhận PDF/DOCX.
-- Kiểm tra extension, MIME, kích thước và file rỗng.
-- Sinh checksum.
-- Lưu File, Submission và Processing Job.
+- Accept PDF/DOCX.
+- Validate extension, MIME/signature, size, and empty files.
+- Store quarantine and accepted file states.
+- Apply local scan policy.
+- Persist File, Submission, and ProcessingJob records.
 
-### Phân tích
+### Analysis
 
-1. Validate.
-2. Extract.
+1. Validate file and context.
+2. Extract text.
 3. Detect reference section.
-4. Parse citation.
+4. Parse citations.
 5. Normalize.
 6. Verify metadata.
-7. Score.
+7. Score with seven Trust Score components.
 8. Build report.
-9. Audit.
+9. Write audit evidence.
 
-### Báo cáo
+### Report
 
-- Xem điểm tổng và theo citation.
-- Xem warning, evidence, confidence.
-- Export PDF/DOCX/XLSX.
-- Xem report history ở mức API.
+- Overall and per-citation score.
+- Warnings, evidence, and confidence.
+- PDF/DOCX/XLSX exports.
+- Report history API surface.
 
-### Quản trị
+### Admin
 
-- Quản lý user.
-- Xem audit.
-- Quản lý metadata provider.
-- Diagnose relevance và AI health.
+- User management.
+- Audit log.
+- Metadata provider management.
+- Relevance diagnostics and AI health.
+- Retention purge dry-run/apply.
 
-## 5. Không được tuyên bố đã hoàn thành
+## 5. Not Claimed as Complete
 
 - OCR.
-- Plagiarism verdict.
-- Full-text validation sau paywall.
-- Citation-in-context.
-- Batch processing.
-- Durable distributed queue.
-- Realtime WebSocket/SSE.
-- Student portal đầy đủ.
+- Plagiarism verdicts.
+- Paywalled full-text validation.
+- Citation-in-context verification.
+- Batch processing as a public production contract.
+- Realtime WebSocket/SSE progress.
+- Full student portal.
 - LMS integration.
 - Multi-tenancy.
-- Production autoscaling/WAF/DR hoàn chỉnh.
+- Autoscaling/WAF/disaster-recovery completion.
+- Academic calibration.
+- Public registration role safety.
 
-## 6. Nguyên tắc sản phẩm
+## 6. Product Principles
 
-### Hỗ trợ quyết định, không thay chuyên gia
+### Review Support, Not Automatic Judgment
 
-Điểm cao không chứng minh nội dung khoa học đúng; điểm thấp không chứng minh gian lận.
+High scores do not prove scientific correctness. Low scores do not prove fraud or
+misconduct.
 
-### Không đồng nhất “không tìm thấy” với “giả”
+### Not-Found Is Not Fake
 
-`NOT_FOUND` chỉ có nghĩa provider chưa trả về metadata phù hợp. Nguyên nhân có thể là chưa index, metadata sai, loại nguồn không được bao phủ, giới hạn truy cập hoặc lỗi mạng.
+`NOT_FOUND` means configured providers did not return a suitable metadata match. It
+may be caused by coverage gaps, metadata errors, unsupported source types, access
+limits, or transient network/provider problems.
 
-### Evidence-first
+### Evidence First
 
-Mỗi điểm thành phần phải có reason, evidence và confidence.
+Every score component should have reason, evidence, and confidence.
 
-### Versioned scoring
+### Versioned Scoring
 
-Report phải lưu phiên bản cấu hình điểm.
+Reports must store scoring/config version so older reports remain explainable.
 
-### Backend là ranh giới bảo mật
+### Backend Is the Security Boundary
 
-Ẩn route/nút ở frontend không thay thế kiểm tra quyền ở API.
+Hidden frontend routes or buttons do not replace backend authorization and ownership
+checks.
 
-## 7. Chỉ số thành công đề xuất
+## 7. Success Metrics
 
-| Nhóm | Chỉ số |
+| Area | Metric |
 |---|---|
-| Tính đúng | Precision/recall parser và metadata match |
-| Hiệu năng | Thời gian tạo job và xử lý theo trang/citation |
-| Tin cậy | Tỷ lệ job hoàn tất/retry/provider lỗi |
-| Giải thích | Tỷ lệ component có evidence/confidence |
-| Bảo mật | Truy cập chéo ownership bị chặn |
-| Khả dụng | Export thành công, file xử lý được |
-| Học thuật | Mức đồng thuận với đánh giá chuyên gia |
+| Correctness | Parser and metadata-match precision/recall. |
+| Performance | Job creation and processing time by pages/citations. |
+| Reliability | Job completion, retry, and provider-failure rates. |
+| Explainability | Component evidence/confidence coverage. |
+| Security | Cross-owner access denied. |
+| Usability | Export success and actionable error states. |
+| Academic validity | Agreement with expert review after calibration. |
 
-## 8. Mức trưởng thành
+## 8. Maturity
 
-TrustLens đã có pipeline thật, nhưng chưa production-ready do background task chưa durable, retry chưa thống nhất, thiếu bằng chứng integration/E2E, mock fallback có thể che lỗi, bảo mật production còn khoảng trống và chưa có benchmark học thuật công khai.
+TrustLens has a real analysis pipeline and database-backed queue baseline. It still
+requires PostgreSQL integration, ownership negative tests, browser E2E, restore
+evidence, production security hardening, registration safety remediation, and academic
+calibration before unconditional release sign-off.

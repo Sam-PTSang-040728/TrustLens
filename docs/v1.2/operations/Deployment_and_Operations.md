@@ -1,88 +1,98 @@
-# 11. Triển khai và Vận hành
+﻿# Deployment and Operations
 
-## 1. Cấu trúc repository
+**Status:** source-aligned v1.2 baseline
+
+## 1. Repository Layout
 
 ```text
 TrustLens/
-├── apps/
-│   ├── frontend/   # Git submodule
-│   └── backend/    # Git submodule
-├── docs/
-├── .gitmodules
-└── README.md
+|-- apps/
+|   |-- frontend/   # Git submodule
+|   `-- backend/    # Git submodule
+|-- docs/
+|-- .gitmodules
+`-- README.md
 ```
 
-Clone đầy đủ:
+Clone with submodules:
 
-```bash
-git clone <root-repository>
-cd TrustLens
+```powershell
 git submodule update --init --recursive
+git submodule status
 ```
 
-## 2. Backend local
-
-### Yêu cầu
-
-- Python 3.11+.
-- PostgreSQL.
-- Virtual environment.
-- Quyền ghi upload/export directories.
-
-### Cài đặt
+## 2. Backend Local Setup
 
 ```powershell
 cd apps/backend
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
+pip install -r requirements-dev.txt
 ```
 
-### Environment
+Example environment:
 
 ```env
 PROJECT_NAME=TrustLens API
+APP_VERSION=1.2.0
 API_V1_PREFIX=/api/v1
 APP_ENV=development
 DATABASE_URL=postgresql+psycopg://postgres:<password>@localhost:5432/trustlens_db
 SECRET_KEY=<strong-random-secret-at-least-32-characters>
 CORS_ORIGINS=http://localhost:5173
-UPLOAD_DIR=uploads
-MAX_UPLOAD_SIZE_MB=20
-
+JOB_QUEUE_MODE=database
+QUARANTINE_DIR=uploads/quarantine
+ACCEPTED_UPLOAD_DIR=uploads/accepted
+FILE_SCAN_MODE=strict
+FILE_SCAN_PROVIDER=local-policy-scanner
 TRUST_SCORE_VERSION=trust-score-v1.2
 RELEVANCE_PROVIDER=gemini
 RELEVANCE_FALLBACK_PROVIDER=local
 RELEVANCE_PROMPT_VERSION=c4-v2
 RELEVANCE_THRESHOLD_PROFILE=gemini-embedding-2-768-c4-v2
-
-GEMINI_API_KEY=
-OPENALEX_API_KEY=
-CROSSREF_MAILTO=<contact-email>
-
 AI_DATA_MODE=sanitized_text_only
 AI_PERSIST_RAW_INPUT=false
 AI_LOG_INPUT_TEXT=false
+DATA_RETENTION_DAYS=180
+EXPORT_RETENTION_DAYS=14
+AUDIT_RETENTION_DAYS=365
 ```
 
-`SECRET_KEY` không có default trong source code. Development/test yêu cầu tối thiểu 32 ký tự; staging/production yêu cầu tối thiểu 48 ký tự và từ chối placeholder như `change-me`, `example`, hoặc `replace-*`.
+`SECRET_KEY` is required. Development/test values must be at least 32 characters.
+Staging/production values must be at least 48 characters and must not contain sample
+or placeholder terms.
 
-### Migration và run
+Run migrations:
 
 ```powershell
 alembic upgrade head
+```
+
+Run API:
+
+```powershell
 uvicorn app.main:app --reload
 ```
 
-- API: `http://localhost:8000/api/v1`
-- Swagger: `http://localhost:8000/docs`
-- Health: `http://localhost:8000/api/v1/health`
+Run worker:
 
-## 3. Frontend local
+```powershell
+python -m app.workers.tasks
+```
+
+Important queue rule:
+
+```text
+JOB_QUEUE_MODE=database
+JOB_QUEUE_MODE=inline only for local debugging
+```
+
+## 3. Frontend Local Setup
 
 ```powershell
 cd apps/frontend
-npm install
+npm ci
 ```
 
 Backend mode:
@@ -97,7 +107,7 @@ VITE_API_LOGGING=true
 npm run dev:backend
 ```
 
-Mock mode:
+Mock mode is only for local UI development:
 
 ```env
 VITE_USE_MOCK=true
@@ -107,190 +117,91 @@ VITE_USE_MOCK=true
 npm run dev:mock
 ```
 
-Staging/production phải `VITE_USE_MOCK=false`, không fallback ngầm sang mock, và production build sẽ fail nếu `VITE_USE_MOCK=true`.
-
-Build:
+Build gate:
 
 ```powershell
 npm run lint
 npm run build
-npm run preview
 ```
 
-## 4. Storage
+## 4. Health and Operations Endpoints
 
-Local filesystem phải không nằm trong public static root, chỉ backend truy cập, có quota/backup/retention, đối soát record-file, tên lưu an toàn và malware scan trước production.
+| Endpoint | Purpose |
+|---|---|
+| `GET /api/v1/health` | Process/version health. |
+| `GET /api/v1/health/ready` | Database and queue readiness. |
+| `GET /api/v1/health/metrics` | Queue counts and oldest queued job age. |
+| `POST /api/v1/admin/retention/purge?dry_run=true` | Retention purge dry run. |
 
-## 5. Background processing
+## 5. Storage
 
-`BackgroundTasks` hiện chạy cùng process API. Hạn chế:
+Current baseline uses local filesystem storage with quarantine and accepted
+directories. Analysis requires accepted storage and clean scan status.
 
-- Restart có thể mất task.
-- Không broker retry/dead-letter.
-- Khó scale ngang.
-- Long task tranh tài nguyên API.
+Production deployments still need:
 
-Production gate yêu cầu durable queue hoặc giải pháp tương đương có bằng chứng.
+- private storage;
+- authorized download path;
+- encryption decision;
+- quota and disk alerts;
+- backup/restore evidence;
+- approved malware scanner;
+- rejected-file cleanup policy.
 
-## 6. Health và observability
+## 6. Runbook
 
-Endpoint hiện có: `GET /api/v1/health`.
+### API Does Not Start
 
-Cần bổ sung:
+Check `DATABASE_URL`, migration state, `SECRET_KEY`, Python dependencies, and port
+availability.
 
-- Readiness cho DB/storage/migration.
-- Liveness process.
-- Provider health.
-- Queue depth.
-- Job failure/duration.
-- Provider latency/rate-limit.
-- Export failure.
-- Disk usage.
-- Backup status.
-- Correlation ID.
+### Upload Fails
 
-## 7. Log
+Check assignment status, permission, file size, extension, MIME/signature, scan
+status, and storage directory permissions.
 
-Không log password, token, secret, full report text, raw AI input hoặc sensitive provider payload.
+### Queue Stuck
 
-Structured fields đề xuất:
+Check:
 
-```text
-timestamp level request_id correlation_id user_id
-resource_type resource_id job_id stage duration_ms error_code
-```
+1. `GET /api/v1/health/metrics`;
+2. whether `python -m app.workers.tasks` is running;
+3. `claimed_by`, `heartbeat_at`, `next_run_at`, and `attempt_count`;
+4. provider timeouts or storage failures.
 
-## 8. Backup và restore
+For local debugging, a one-batch/one-run worker mode may be used if supported by the
+worker command options in the current backend source.
 
-Production cần PostgreSQL + file/object backup, encryption, retention, off-site copy, restore drill, RPO/RTO và point-in-time consistency. Có backup job chưa đồng nghĩa có DR.
+### No Report After Completed Job
 
-## 9. Production checklist
+Completed analysis jobs must have `report_id`. If missing, treat as data integrity
+failure and inspect pipeline logs, job error fields, and report persistence.
 
-### Security
+### Provider Unavailable
 
-- [ ] Secret không default.
-- [ ] HTTPS.
-- [ ] CORS allow-list.
-- [ ] Rate limiting.
-- [ ] Malware scan.
-- [ ] CSP/security headers.
-- [ ] Dependency/secret scan.
-- [ ] Least-privilege DB.
-- [ ] Private storage.
-- [ ] Protected audit.
+Provider unavailability must reduce confidence or degrade gracefully. It must not be
+converted into a conclusion that the source is fake.
 
-### Reliability
+### Refresh-Token Incident
 
-- [ ] Unified pipeline.
-- [ ] Durable queue.
-- [ ] Retry/idempotency.
-- [ ] Worker monitoring.
-- [ ] Backup/restore tested.
-- [ ] Provider timeout/fallback.
-- [ ] No mock fallback.
+Revoke affected refresh tokens. Rotate `SECRET_KEY` only with a planned global logout
+window and deployment coordination.
 
-### Quality
+## 7. Backup and Restore
 
-- [ ] Integration/E2E.
-- [ ] Ownership negative tests.
-- [ ] Benchmark.
-- [ ] Migration test.
-- [ ] Export validation.
-- [ ] Docs aligned.
+Full sign-off requires PostgreSQL and file/object storage backup from a consistent
+point, restore into a separate environment, checksum verification, and DB-file
+reconciliation. A backup job without restore evidence is not enough.
 
-### Operations
+## 8. Release Operations Checklist
 
-- [ ] Runbook/alerts/contacts.
-- [ ] Retention/cost/quota.
-- [ ] Rollback plan.
-
-## 10. Rollback
-
-Mỗi deployment cần previous build, DB compatibility, feature flags, scoring compatibility, worker/API compatibility và cách xử lý job đang chạy. Không rollback scoring bằng cách sửa report lịch sử.
-
-## 11. Environment separation
-
-| Môi trường | Mock | Dữ liệu | Mục tiêu |
-|---|---|---|---|
-| Local mock | Có | Giả | UI |
-| Local backend | Không | Dev | Tích hợp |
-| Test | Không | Fixture | CI |
-| Staging | Không | Phi production | Nghiệm thu |
-| Production | Không | Thật | Vận hành |
-
-## 12. Runbook ngắn
-
-### API không chạy
-
-Kiểm tra `DATABASE_URL`, migration, `SECRET_KEY`, port.
-
-### Upload lỗi
-
-Kiểm tra assignment open, permission, MIME/size và quyền thư mục.
-
-### Job đứng
-
-Kiểm tra API process, job state, provider timeout. Với `BackgroundTasks`, restart không tự phục hồi.
-
-### Không có report
-
-Xác nhận dùng endpoint analyze/pipeline thật; kiểm tra job error và report relation.
-
-### Provider unavailable
-
-Kiểm tra key/quota/rate limit/fallback; không chuyển thành kết luận nguồn giả.
-# P1 pilot-readiness update - 2026-07-06
-
-Backend setup now has separate runtime and development dependencies:
-
-```powershell
-cd apps/backend
-pip install -r requirements.txt       # runtime
-pip install -r requirements-dev.txt   # CI/local quality gate
-```
-
-Required pilot services:
-
-1. API process:
-
-   ```powershell
-   uvicorn app.main:app --reload
-   ```
-
-2. Database-backed worker:
-
-   ```powershell
-   python -m app.workers.tasks
-   ```
-
-3. Migrations:
-
-   ```powershell
-   alembic upgrade head
-   ```
-
-Important environment variables:
-
-```env
-JOB_QUEUE_MODE=database
-QUARANTINE_DIR=uploads/quarantine
-ACCEPTED_UPLOAD_DIR=uploads/accepted
-FILE_SCAN_MODE=strict
-FILE_SCAN_PROVIDER=local-policy-scanner
-DATA_RETENTION_DAYS=180
-EXPORT_RETENTION_DAYS=14
-AUDIT_RETENTION_DAYS=365
-```
-
-Health and operations endpoints:
-
-- `GET /api/v1/health`: process liveness.
-- `GET /api/v1/health/ready`: database and queue readiness.
-- `GET /api/v1/health/metrics`: queue status counts and oldest queued job age.
-- `POST /api/v1/admin/retention/purge?dry_run=true`: retention purge dry run.
-
-Runbook additions:
-
-- Queue stuck: check `/health/metrics`, confirm worker process is running, then run `python -m app.workers.tasks --once` to process one batch.
-- Scanner rejection: inspect `files.scan_status` and `files.scan_details`; rejected files must not be manually moved to accepted storage.
-- Refresh-token incident: revoke affected tokens by account and rotate `SECRET_KEY` only with a planned global logout window.
+- API and worker deployed as separate processes.
+- `JOB_QUEUE_MODE=database`.
+- Migrations applied.
+- Health/readiness/metrics reachable.
+- Secrets configured by environment.
+- Exact CORS origins configured.
+- Mock mode disabled outside local mock development.
+- Retention values approved.
+- Restore drill completed before real data is in scope.
+- Known limitations visible in pilot/release materials.

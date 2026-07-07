@@ -1,130 +1,124 @@
-# 09. Bảo mật và Quyền riêng tư
+﻿# Security and Privacy
 
-## 1. Tài sản và rủi ro
+**Status:** source-aligned v1.2 baseline
 
-Tài sản: tài khoản/token, file report, extracted text, class/submission, metadata, score/report, audit, provider secret, database/storage.
+This document describes implemented controls, blockers, and remaining hardening work.
+It intentionally avoids unconditional production claims where release evidence is
+missing.
 
-Rủi ro: IDOR, role escalation, upload độc hại, đoán path, XSS lấy token, default secret, gửi dữ liệu quá mức cho provider, mock che lỗi, log lộ nội dung, CORS rộng và brute force.
+## 1. Critical Blocker
 
-## 2. Kiểm soát đã có
+### Public Self-Registration Creates Active Lecturers
 
-- JWT access/refresh.
-- User inactive bị từ chối khi refresh.
-- Backend permission dependency.
-- Ownership check cho class/assignment/submission/job/report/export.
-- Upload validation: extension, MIME, size, empty, safe name, checksum.
-- Audit cho sign-up, login, profile, upload, analyze, delete, admin.
-- Axios dev logger redact token/password/secret.
+Current source code creates public registrations with:
 
-## 3. Khoảng trống
+```python
+role="lecturer"
+is_active=True
+```
 
-### Default secret
+**Status:** `Blocked`
 
-Production phải fail-fast khi secret thiếu, bằng default, quá ngắn hoặc đã lộ.
+Public registration must not directly create an active lecturer account. A safer
+future lifecycle is:
 
-### Password/rate limit
+```text
+PENDING_LECTURER
+-> EMAIL_VERIFIED
+-> ADMIN_APPROVED
+-> LECTURER
+```
 
-Mức 6 ký tự là thấp. Cần length mạnh hơn, block password phổ biến, throttling/lockout, reset an toàn và email verification nếu áp dụng.
+Until this is implemented and tested, public registration role safety must remain a
+release blocker.
 
-### Token storage
+## 2. Assets and Risk Areas
 
-`localStorage` tăng tác động XSS. Cần CSP, dependency audit, sanitization, refresh rotation/revocation và đánh giá cookie HttpOnly Secure SameSite.
+| Asset | Main risks |
+|---|---|
+| Accounts and tokens | Credential stuffing, refresh replay, role escalation, token theft. |
+| Submission files | Malware, path traversal, unauthorized access, retention failure. |
+| Extracted text | Privacy leakage, excessive provider sharing, raw logging. |
+| Classes/submissions/reports | IDOR, cross-lecturer access, stale deleted resources. |
+| Metadata/provider secrets | Key leakage, provider payload leakage, rate-limit failures. |
+| Trust Score reports | Misinterpretation as misconduct proof or scientific truth. |
 
-### CORS
+## 3. Implemented Controls
 
-Regex mọi subdomain `vercel.app` quá rộng; production dùng allow-list deployment cụ thể.
-
-### File malware
-
-MIME/extension không thay malware scan. Cần quarantine, scan, reject active content, quota và tách storage.
-
-### Mock fallback
-
-Ngoài explicit mock mode, backend lỗi phải hiển thị lỗi thật; không được báo thành công bằng dữ liệu giả.
-
-### Background task
-
-`BackgroundTasks` mất task khi process restart; đây là rủi ro integrity/reliability.
-
-### Error detail
-
-Production phải lọc path, stack trace, secret, raw provider payload nhạy cảm và report text.
-
-## 4. Authorization matrix
-
-| Hành động | Admin | Lecturer | Student |
-|---|---:|---:|---:|
-| Login | ✓ | ✓ | ✓ |
-| Course | ✓ | ✓ | — |
-| Class | ✓ | Theo ownership | — |
-| Assignment | ✓ | Theo ownership | — |
-| Upload/analyze | ✓ | Theo scope | — |
-| Report/export | ✓ | Theo scope | — |
-| User admin | ✓ | — | — |
-| Audit/provider | ✓ | — | — |
-
-## 5. Privacy by design
-
-### Data minimization
-
-- Chỉ gửi chunk/context cần thiết.
-- Loại dữ liệu nhận dạng không cần.
-- Không lưu/log raw AI input mặc định.
-
-### Purpose limitation
-
-File chỉ dùng để trích xuất citation, verify metadata, score và tạo report. Không tái sử dụng huấn luyện model khi chưa có cơ sở/ thông báo phù hợp.
-
-### Retention cần khóa
-
-| Dữ liệu | Retention | Xóa |
+| Control | Status | Notes |
 |---|---|---|
-| File gốc | TBD | Soft delete → purge |
-| Extracted text | TBD | Theo submission |
-| Metadata response | TBD | Cache có hạn |
-| Report/export | TBD | Theo course policy |
-| Audit | Dài hơn nghiệp vụ | Controlled purge |
-| Token/session | Ngắn | Expiry/revoke |
+| Password policy | Implemented | Minimum length, common password and trivial repeat rejection. |
+| JWT access tokens | Implemented | `HS256` access tokens. |
+| Refresh rotation/revocation | Implemented | Server-side hashed refresh token records, rotation, logout revocation. |
+| Replay/revoked refresh rejection | Implemented | Audited on rejected reuse. |
+| Process-local auth rate limit | Implemented | Login/register/refresh limits. |
+| Secret validation | Implemented | Required `SECRET_KEY`, length checks, placeholder rejection. |
+| Permission dependencies | Implemented | Backend permission dependencies. |
+| Ownership checks | Implemented | Class, assignment, submission, job, report/export scope checks. |
+| Quarantine storage | Implemented | Uploads start in quarantine. |
+| Signature validation | Implemented | Extension/MIME/signature checks. |
+| Local scan policy | Implemented | Pilot policy scanner; not enterprise malware scanning. |
+| Accepted-storage gate | Implemented | Analysis requires accepted and clean file state. |
+| Audit log | Implemented | Auth, upload, analyze, delete, and admin actions. |
+| Retention purge | Implemented | Configurable dry-run/apply endpoint. |
+| AI raw input logging disabled | Implemented | Raw AI input persistence/logging disabled by default. |
+| Correlation ID | Implemented | `x-correlation-id` middleware. |
+| Security headers | Partial | Baseline headers exist; production CSP validation still needed. |
 
-### Provider ngoài
+## 4. Controls Not Yet Sufficient
 
-Phải công bố provider nhận dữ liệu gì, vùng lưu, retention, training use, opt-out, subprocessor và quản lý API key.
+| Area | Status | Required before full sign-off |
+|---|---|---|
+| Shared rate limiter | Planned | Redis or equivalent shared store across replicas. |
+| Enterprise malware scanning | Planned | Approved scanner, EICAR test, unavailable policy, quarantine cleanup. |
+| Encrypted object storage | Planned | Private storage, encryption, authorized download, restore evidence. |
+| Formal legal basis | Planned | Policy approval for processing, retention, providers, and data subject handling. |
+| Full security integration suite | Blocked | Ownership negative, refresh replay, upload security, CORS/CSP, error redaction tests. |
+| Cookie/CSP hardening | Planned | Evaluate HttpOnly Secure SameSite cookies and strict CSP. |
+| Restore evidence | Blocked | Restore drill with DB-file reconciliation. |
 
-## 6. Production controls
+## 5. Authorization Matrix
 
-TLS, secret manager, least-privilege DB, private object storage, authorized download, malware scan, rate limit, CSP/security headers, dependency/SAST/secret scan, encrypted backup, restore drill, tamper-evident audit, abnormal login monitoring và incident response.
+| Action | Admin | Lecturer | Student |
+|---|---:|---:|---:|
+| Login | Yes | Yes | Yes |
+| Course management | Yes | Yes | No |
+| Class management | Yes | Owned scope | No |
+| Assignment management | Yes | Owned scope | No |
+| Upload/analyze | Yes | Owned scope | No |
+| Report/export | Yes | Owned scope | No |
+| User admin | Yes | No | No |
+| Audit/provider admin | Yes | No | No |
 
-## 7. Security tests
+Executable ownership negative tests are still required before marking this matrix
+`Verified`.
 
-1. IDOR trên mọi resource.
-2. Role escalation.
-3. Token giả/hết hạn/refresh replay.
-4. MIME spoof/path traversal/oversize/malformed PDF.
-5. Stored file guessing.
-6. Invalid CORS origin.
-7. Brute force.
-8. Error information leak.
-9. Mock disabled outside mock mode.
+## 6. Privacy Rules
+
+- Send only the minimum necessary citation/reference context to providers.
+- Do not send the full report to metadata providers.
+- Do not log passwords, tokens, secrets, full report text, raw AI input, or sensitive
+  provider payloads.
+- Preserve provider/model/prompt/version evidence where AI or metadata providers are
+  used.
+- Publish limitations for Trust Score interpretation and provider coverage.
+
+## 7. Required Security Tests
+
+1. Cross-lecturer IDOR for class, assignment, submission, job, report, and export.
+2. Role escalation and self-edit role/permission attempts.
+3. Expired, malformed, replayed, and revoked refresh tokens.
+4. MIME spoofing, path traversal, oversize, malformed PDF/DOCX, and scan rejection.
+5. Stored file guessing and unauthorized download.
+6. Invalid CORS origin and CSP smoke.
+7. Brute force/rate-limit behavior.
+8. Error/log redaction.
+9. Mock mode disabled outside explicit mock configuration.
 10. Provider secret redaction.
-11. Access deleted resources.
+11. Access to deleted resources.
 
-## 8. Nguyên tắc kết luận
+## 8. Policy Boundary
 
-Request trả 200 nhưng lộ dữ liệu user khác vẫn là thất bại. UI báo thành công bằng mock khi backend thất bại vẫn là thất bại toàn vẹn.
-# P1 pilot-readiness update - 2026-07-06
-
-Implemented controls:
-
-- Password policy now requires at least `PASSWORD_MIN_LENGTH` characters, rejects common passwords, and rejects trivial repeated-character passwords.
-- `/auth/login`, `/auth/register`, and `/auth/refresh` have per-process rate limiting with `429` and `Retry-After`.
-- Refresh tokens are stored server-side as hashes, rotate on refresh, and can be revoked through `/auth/logout`.
-- Reuse of a rotated/revoked refresh token is rejected and audited as replay/revocation.
-- Uploads are stored in quarantine, checked by signature/magic bytes, scanned by local policy, and only then promoted to accepted storage.
-- Pipeline validation rejects files whose `scan_status` is not `clean` or whose `storage_state` is not `accepted`.
-- Retention purge is available through `POST /api/v1/admin/retention/purge`; `dry_run=true` is the default safety mode.
-
-Pilot caveats:
-
-- Current rate limiting is in-memory per API process. Multi-replica deployment should use Redis or another shared limiter.
-- The local scanner is a policy scanner for pilot wiring and catches EICAR test strings and Office macro markers. Production should integrate an approved malware scanner.
-- Frontend still stores tokens in browser storage; CSP and HttpOnly Secure SameSite cookie migration remain recommended hardening work.
+Trust Score is a review-support signal based on available metadata and evidence. It
+is not an automatic conclusion about fraud, academic misconduct, scientific truth, or
+grading outcome.

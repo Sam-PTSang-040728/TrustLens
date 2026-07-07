@@ -1,129 +1,97 @@
-# Giới hạn đã biết của TrustLens v1.2
+﻿# Known Limitations for TrustLens v1.2
 
-Tài liệu này phải được công bố cùng bản pilot/release để tránh diễn giải quá mức năng lực hệ thống.
+**Status:** release-facing limitation register
+**Application version:** `1.2.0`
 
-## 1. Phạm vi file
+These limitations are part of the release contract and must be visible in pilot or
+release materials.
 
-- Hỗ trợ PDF có text layer và DOCX.
-- PDF scan hoặc nội dung chỉ ở dạng ảnh không được OCR trong v1.2.
-- PDF malformed, encrypted hoặc bố cục hiếm có thể extraction thất bại.
-- Parser có thể sai khi references không có heading rõ hoặc định dạng quá bất thường.
+## 1. Mandatory Limitations
 
-## 2. Metadata verification
+1. Scanned/image-only PDFs are not OCR-supported in v1.2.
+2. Plagiarism detection is not implemented.
+3. Citation-in-context verification is not implemented.
+4. Research methodology quality assessment is not implemented.
+5. Metadata verification depends on Crossref/OpenAlex/provider availability.
+6. URL-only evidence does not prove that a source is academic.
+7. Academic calibration is not complete.
+8. Local scan policy is not an enterprise antivirus/malware scanner.
+9. Auth rate limiting is process-local.
+10. Local file storage is not suitable for large production deployments without
+    additional storage, backup, and security controls.
+11. Multi-tenancy is not implemented.
+12. Public registration role safety is a blocker because public registration creates
+    active lecturers in the current source.
+13. Application version remains `1.2.0`.
 
-- Provider không bao phủ mọi loại nguồn.
-- `NOT_FOUND` chỉ có nghĩa không tìm thấy trong provider/config hiện tại; không chứng minh nguồn giả.
-- URL trả `200` không chứng minh nguồn học thuật hoặc metadata đúng.
-- Provider timeout/rate limit có thể làm confidence giảm hoặc dùng fallback.
-- Metadata của chính provider có thể thiếu hoặc sai.
+## 2. File and Extraction Limits
 
-## 3. Trust Score
+- Supported baseline formats are text-layer PDF and DOCX.
+- Malformed, encrypted, or unusually structured files may fail extraction.
+- Missing or unusual reference headings may cause reference detection or citation
+  splitting errors.
+- Raw extraction evidence should be preserved for reviewer inspection.
 
-- Trust Score là tín hiệu hỗ trợ rà soát, không phải xác suất đúng khoa học.
-- Điểm thấp không tự động chứng minh gian lận.
-- Điểm cao không chứng minh nội dung bài báo hoặc báo cáo là đúng.
-- Credibility dựa trên evidence khả dụng, không thể đánh giá đầy đủ chất lượng phương pháp nghiên cứu.
-- Recency phụ thuộc lĩnh vực; tài liệu nền tảng cũ không mặc định là không phù hợp.
-- Fuzzy duplicate có false positive/false negative.
-- Report score chưa được xem là calibrated nếu chưa có benchmark được phê duyệt.
+## 3. Metadata Limits
 
-## 4. Relevance
+- Provider coverage is incomplete.
+- Provider timeout/rate limits can reduce confidence or force fallback behavior.
+- `NOT_FOUND` means the configured providers did not find metadata; it does not prove
+  a source is fake.
+- `PROVIDER_UNAVAILABLE` means provider evidence is unavailable and must not be
+  treated as `NOT_FOUND`.
+- Metadata from providers can itself be incomplete or wrong.
 
-- Relevance phụ thuộc phần text trích xuất, assignment context và title/abstract có sẵn.
-- Abstract thiếu làm giảm evidence.
-- Local lexical fallback yếu hơn semantic provider.
-- Ngôn ngữ, thuật ngữ chuyên ngành và nội dung liên ngành có thể làm sai kết quả.
-- Hệ thống chưa xác minh đầy đủ việc một citation có hỗ trợ chính xác từng mệnh đề trong báo cáo.
+## 4. Trust Score Limits
 
-## 5. Citation style
+- Trust Score is a review-support signal, not a probability of scientific correctness.
+- Low scores do not prove misconduct.
+- High scores do not prove a cited work is correct, appropriate, or methodologically
+  sound.
+- Credibility scoring uses available metadata/evidence and cannot replace expert
+  review.
+- Recency depends on field context; old foundational works are not automatically
+  inappropriate.
+- Fuzzy duplicate detection can produce false positives or false negatives.
+- Report scores must not be used for formal academic decisions without approved
+  benchmark/calibration evidence and policy.
 
-- Style detection không thay thế kiểm tra thủ công toàn bộ chuẩn APA/IEEE/MLA/ACM.
-- Một citation đúng dấu câu vẫn có thể sai metadata.
-- Mixed style hoặc local institutional rules có thể cần cấu hình riêng.
+## 5. Security and Privacy Limits
 
-## 6. Security và privacy
+- Local scan policy is not a production malware scanner.
+- Process-local rate limiting is not enough for multi-replica deployments.
+- Browser token storage increases XSS impact until cookie/CSP hardening is completed.
+- Public registration role safety is blocked.
+- Production deployments must configure exact CORS origins, secrets, retention, and
+  provider policies.
+- Restore evidence is not complete.
 
-- Local policy scanner không tương đương production antivirus/malware scanner.
-- Rate limiting in-memory không phù hợp multi-replica deployment.
-- Browser token storage làm tăng tác động của XSS cho đến khi có cookie/CSP hardening đầy đủ.
-- Mọi deployment phải cấu hình exact CORS origins, secrets, retention và provider policy riêng.
+## 6. Reliability Limits
 
-## 7. Reliability
+- The database-backed queue is the current pilot baseline, but full crash,
+  concurrency, stale recovery, and restore evidence is still required.
+- External providers are dependencies outside TrustLens control.
+- No production SLO/SLA should be stated before performance benchmarking.
+- Backup automation without restore drill evidence is not enough.
 
-- Database-backed queue phù hợp pilot nhưng cần heartbeat/lease và concurrency evidence đầy đủ.
-- Provider ngoài là dependency không kiểm soát hoàn toàn.
-- Không có SLO/SLA production trước performance benchmark.
-- Backup tồn tại không đồng nghĩa restore đã được chứng minh.
+## 7. Use Policy Boundary
 
-## 8. Frontend và batch
+TrustLens results must be reviewed by a lecturer or reviewer together with the
+evidence. Do not use TrustLens to automatically:
 
-- Batch analysis không được coi là supported nếu backend chưa có contract tương ứng.
-- Mock mode chỉ dùng cho phát triển UI và phải được đánh dấu rõ.
-- Accessibility chưa được tuyên bố đạt chuẩn khi chưa có audit.
+- conclude that a student committed fraud or misconduct;
+- grade, penalize, or discipline a student;
+- reject a source only because a provider did not find it;
+- replace expert assessment of research quality.
 
-## 9. Use policy
-
-Kết quả TrustLens cần được giảng viên hoặc reviewer xem cùng evidence. Không dùng hệ thống để tự động:
-
-- kết luận sinh viên gian lận;
-- trừ điểm hoặc kỷ luật;
-- loại bỏ tài liệu chỉ vì provider không tìm thấy;
-- thay thế đánh giá chuyên gia về chất lượng nghiên cứu.
-
-## 10. Cách báo cáo lỗi
-
-Khi ghi nhận lỗi, cung cấp:
-
-- correlation ID;
-- job/report ID nếu có;
-- loại file và kích thước;
-- error code;
-- scoring version;
-- provider/fallback status;
-- dữ liệu mẫu đã được ẩn danh.
-
-Không gửi password, token, API key hoặc báo cáo chứa dữ liệu nhạy cảm qua issue công khai.
-
-## 11. Evidence and Policy Boundary
-
-Known limitations are part of the release contract. They must be visible in pilot
-materials, not hidden in internal notes.
-
-Mandatory policy statement:
-
-> Trust Score is a review-support signal based on available metadata and evidence. It
-> is not an automatic conclusion about fraud, academic misconduct, scientific truth or
-> grading outcome.
-
-Operational consequences:
-
-- reviewers must inspect evidence before taking action;
-- provider `NOT_FOUND` does not prove a source is fake;
-- low score does not prove misconduct;
-- high score does not prove the cited work is correct or appropriate;
-- benchmark/calibration status must be disclosed when not approved.
-
-## 12. Release-Specific Open Limitations
-
-| Area | Limitation | Required disclosure/action |
-|---|---|---|
-| OCR | Scanned/image-only PDFs are not supported in v1.2 | UI/report must show extraction limitation, not generic failure |
-| Parser | Unusual reference layouts can fail or split citations incorrectly | Preserve raw extraction evidence for review |
-| Metadata provider | Provider coverage is incomplete and can be unavailable | Show provider/fallback/confidence |
-| Relevance | Vietnamese/English/domain variation can affect C4 | Do not overstate semantic accuracy before benchmark |
-| Security | Local scan policy is not a production malware scanner | Require approved scanner for real uploads |
-| Queue | Database queue needs heartbeat/lease/concurrency evidence | Do not claim production reliability without crash tests |
-| Batch | `/analysis-batches` is unsupported unless backend contract is implemented | Hide batch UI in production or complete backend batch |
-| Accessibility | No accessibility conformance claim without audit | Run smoke/audit before public release |
-
-## 13. Limitation Removal Rule
+## 8. Limitation Removal Rule
 
 A limitation can be removed only when:
 
-1. code/config change exists;
-2. migration exists if persisted data changed;
+1. implementation/configuration exists;
+2. migration exists if persisted data changes;
 3. unit/integration/E2E/security evidence exists as appropriate;
-4. docs/API/contract matrix are updated;
+4. API, contract, and docs are updated;
 5. release owner approves the evidence.
 
 Do not remove a limitation because a roadmap item exists or a mock/demo flow works.

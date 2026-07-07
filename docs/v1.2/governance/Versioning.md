@@ -1,4 +1,4 @@
-# TrustLens Versioning Policy
+﻿# TrustLens Versioning Policy
 
 **Status:** canonical for v1.2
 **Current application version:** `1.2.0`
@@ -96,9 +96,9 @@ supported API version in the relevant service or release notes.
 
 ## 6. Trust Score Versioning
 
-The scoring version is intentionally separate from the application version.
-Application `1.2.1` can still use `trust-score-v1.2` if the score logic did not
-change.
+The scoring version is intentionally separate from the application version. A future
+application patch release can still use `trust-score-v1.2` if the score logic did
+not change.
 
 Increment the scoring version when any of the following changes:
 

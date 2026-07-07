@@ -1,31 +1,37 @@
+﻿```mermaid
 sequenceDiagram
     actor L as Lecturer
     participant FE as React Frontend
     participant API as FastAPI
     participant DB as PostgreSQL
-    participant BG as BackgroundTasks
+    participant Q as processing_jobs
+    participant W as Worker
     participant META as Metadata Provider
     participant EMB as Embedding Provider
-    L->>FE: Chọn assignment + PDF/DOCX
+
+    L->>FE: Select assignment + PDF/DOCX
     FE->>API: POST /submissions/upload
-    API->>DB: File + Submission + Job
-    API-->>FE: submission_id, job_id
+    API->>DB: File + Submission + initial Job
+    API-->>FE: submission_id, file_id, job_id
     FE->>API: POST /submissions/{id}/analyze
-    API->>DB: New Job QUEUED
-    API->>BG: run_analysis_pipeline(job_id)
+    API->>DB: Create/reuse queued job
+    API->>Q: Enqueue analysis job
     API-->>FE: 202 Accepted
-    BG->>DB: VALIDATING / EXTRACTING
-    BG->>DB: DETECTING / PARSING
+    W->>Q: Claim queued job
+    W->>DB: VALIDATING / EXTRACTING
+    W->>DB: DETECTING_REFERENCES / PARSING_CITATIONS
     loop citations
-        BG->>META: Query metadata
-        META-->>BG: Candidate + evidence
+        W->>META: Query metadata
+        META-->>W: Candidate + evidence
     end
-    BG->>EMB: Relevance request
-    EMB-->>BG: Similarity + evidence
-    BG->>DB: C1-C7 + Report + Audit
-    loop Poll every 2s
+    W->>EMB: Relevance request
+    EMB-->>W: Similarity + evidence
+    W->>DB: Score C1-C7 + Report + Audit
+    W->>Q: COMPLETED with report_id
+    loop Poll
         FE->>API: GET /jobs/{job_id}
-        API-->>FE: status + progress
+        API-->>FE: status + progress + report_id
     end
-    FE->>API: GET /reports/submissions/{id}
+    FE->>API: GET /reports/{report_id}
     API-->>FE: Report
+```

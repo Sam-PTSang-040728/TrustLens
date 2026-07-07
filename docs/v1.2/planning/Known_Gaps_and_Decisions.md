@@ -1,137 +1,63 @@
-# 13. Known Gaps và Quyết định Kiến trúc
+﻿# Known Gaps and Decisions
 
-## P0 remediation status - 2026-07-06
+**Status:** source-aligned v1.2 baseline
+**Authoritative status matrix:** [P0/P1 completion status](P0_P1_Completion_Status.md)
 
-Remediated in implementation:
+## 1. Architecture Decisions
 
-- GAP-001: analyze, process alias and retry now use the canonical analysis pipeline.
-- GAP-002: frontend mock fallback is explicit-only through `VITE_USE_MOCK=true`; admin user mutations no longer fake success after backend failure.
-- GAP-003: backend `SECRET_KEY` has no source default and validates length/sample values with environment-aware fail-fast rules.
-- GAP-007: backend exception handlers normalize validation, HTTP and internal failures to a top-level error schema with `correlation_id`.
-
-Still open after P0 code remediation:
-
-- GAP-004: `BackgroundTasks` is still not a durable distributed queue.
-- GAP-005: PostgreSQL integration/security suites and browser E2E are not present yet.
-- GAP-008 to GAP-020 remain as previously listed unless separately closed.
-## 1. ADR đã khóa
-
-### ADR-001 — C1–C7 v1.2 là baseline
-
-Frontend/backend cùng định nghĩa C1–C7, tổng 100. Docs C1–C8 phải archive hoặc cập nhật.
-
-### ADR-002 — Analyze là canonical
-
-```text
-POST /api/v1/submissions/{submission_id}/analyze
-```
-
-Process/retry phải gọi cùng pipeline trước production.
-
-### ADR-003 — Modular monolith trước distributed services
-
-Giữ FastAPI modular monolith; tách worker theo workload sau khi ổn định. Rủi ro hiện tại là consistency/test/ownership, không phải thiếu microservices.
-
-### ADR-004 — Mock chỉ explicit
-
-Mock chỉ hoạt động khi `VITE_USE_MOCK=true`; backend error phải fail thật.
-
-### ADR-005 — Evidence và confidence bắt buộc
-
-Mỗi component score có reason/evidence/confidence.
-
-### ADR-006 — Provider không phải oracle
-
-Not-found/provider failure không đồng nghĩa fake.
-
-### ADR-007 — Scoring change phải version
-
-Weight, threshold, model hoặc logic có tác động phải tăng version.
-
-## 2. Gap register
-
-| ID | Mức | Gap | Tác động | Hành động |
-|---|---|---|---|---|
-| GAP-001 | Critical | Retry/process placeholder | Fake completion | Remediated: unified canonical pipeline |
-| GAP-002 | Critical | Mock fallback | Fake success | Remediated: explicit mock mode only |
-| GAP-003 | Critical | Default secret | Token compromise | Remediated: startup fail-fast validator |
-| GAP-004 | High | Không durable queue | Mất job | Worker queue |
-| GAP-005 | High | Chưa xác nhận integration/E2E | Không đủ nghiệm thu | CI integration |
-| GAP-006 | High | C1–C8 docs vs C1–C7 code | Báo cáo sai | Migrate |
-| GAP-007 | High | Client/server error schema drift | UI may parse errors incorrectly | Remediated: global error handler |
-| GAP-008 | High | CORS rộng | Origin ngoài ý muốn | Allow-list |
-| GAP-009 | High | Password/rate-limit yếu | Account attack | Auth hardening |
-| GAP-010 | High | localStorage token | XSS impact | CSP/cookie strategy |
-| GAP-011 | High | Không malware scan | Upload risk | Quarantine/scan |
-| GAP-012 | High | Retention chưa khóa | Privacy/storage | Policy + purge |
-| GAP-013 | Medium | OCR chưa có | PDF scan fail | UX/OCR |
-| GAP-014 | Medium | List API không pagination | Scale | Pagination |
-| GAP-015 | Medium | Stage endpoints rộng | Contract surface | Internalize |
-| GAP-016 | Medium | Model skeleton chưa chắc dùng | Complexity | Entity audit |
-| GAP-017 | Medium | Preset frontend chưa chắc backend áp dụng | Config drift | Backend source |
-| GAP-018 | Medium | Chưa benchmark | Validity unknown | Evaluation corpus |
-| GAP-019 | Medium | Disclaimer report chưa đủ | Misinterpretation | UI/report warning |
-| GAP-020 | Low | Một số lỗi encoding/không dấu | UX | Normalize i18n |
-
-## 3. Sai lệch docs cũ
-
-- `archive/reviews/SRS_Standardization_Review.md` là review SRS, không phải product docs; đã phân tách vào SRS/architecture/test.
-- P0 cũ dùng C1–C8 và Celery/Redis như baseline; không còn đúng hiện trạng.
-- P1 có một số nội dung đã partial như export, audit, duplicate/confidence; batch/retention/observability vẫn thiếu.
-- P2 giữ làm roadmap; OCR/LMS/multi-tenant/MLOps không được mô tả implemented.
-
-## 4. Open questions
-
-| ID | Câu hỏi | Owner đề xuất |
+| ID | Decision | Status |
 |---|---|---|
-| OQ-001 | Aggregate/penalty chính thức? | BA/NLP |
-| OQ-002 | C1–C7 có thay vĩnh viễn C1–C8? | Product + BA |
-| OQ-003 | Student xem evidence đến mức nào? | Product |
-| OQ-004 | Retention bao lâu? | Product + Privacy |
-| OQ-005 | Provider nào được nhận text? | Security/Privacy |
-| OQ-006 | Queue production chọn gì? | Backend/DevOps |
-| OQ-007 | Multi-tenant là yêu cầu thật hay xa? | Product |
-| OQ-008 | Weight tùy chỉnh theo assignment đến đâu? | BA/NLP |
-| OQ-009 | Report history immutable hay mutable? | Backend/BA |
-| OQ-010 | Ai gán nhãn benchmark? | Academic owner |
+| ADR-001 | Trust Score v1.2 uses seven components with total weight 100. | Current baseline |
+| ADR-002 | `POST /api/v1/submissions/{submission_id}/analyze` is canonical. | Current baseline |
+| ADR-003 | Process endpoint is a backward-compatible alias. | Current baseline |
+| ADR-004 | TrustLens remains a modular monolith; split workloads only with evidence. | Current baseline |
+| ADR-005 | Mock mode is explicit only through `VITE_USE_MOCK=true`. | Current baseline |
+| ADR-006 | Provider not-found/unavailable statuses are not academic truth judgments. | Current baseline |
+| ADR-007 | Scoring-impacting logic changes require a scoring version change. | Current baseline |
+| ADR-008 | v1.2 uses a database-backed queue in `processing_jobs`. | Current baseline |
 
-## 5. Architectural consistency
+## 2. Gap Register
 
-Hệ thống nhất quán khi có một API contract, một state machine, một pipeline, một scoring definition versioned, một permission vocabulary, một error schema, một mock policy, một ownership model và docs khớp code.
-# P1 pilot-readiness update - 2026-07-06
+| ID | Severity | Gap | Impact | Status |
+|---|---|---|---|---|
+| GAP-001 | Critical | Process/retry placeholder behavior | False completion | Remediated in code; needs integration/E2E evidence |
+| GAP-002 | Critical | Mock fallback | False success | Remediated in code; needs E2E evidence |
+| GAP-003 | Critical | Default secret | Token compromise | Remediated in code; needs CI/security evidence |
+| GAP-004 | High | Durable queued execution | Lost/duplicated jobs | Implemented for pilot with database queue; needs crash/concurrency evidence |
+| GAP-005 | High | Missing integration/E2E evidence | Cannot fully sign off | Blocked |
+| GAP-006 | High | Old scoring docs contradicted seven-component code | Misleading reports | Remediated in canonical docs |
+| GAP-007 | High | Error schema drift | Client parsing failures | Partial; contract tests needed |
+| GAP-008 | High | CORS/security headers need deployment validation | Origin/security risk | Partial |
+| GAP-009 | High | Auth hardening incomplete | Account attacks | Partial; shared limiter/CSP/cookie work remains |
+| GAP-010 | High | Browser token storage | XSS impact | Planned hardening |
+| GAP-011 | High | Production malware scanner absent | Upload risk | Planned |
+| GAP-012 | High | Retention/restore evidence incomplete | Privacy/data loss | Blocked |
+| GAP-013 | Medium | OCR absent | Scanned PDFs fail | Planned |
+| GAP-014 | Medium | Pagination consistency needs tests | Scale/client drift | Partial |
+| GAP-015 | Medium | Stage endpoints widen API surface | Contract complexity | Open decision |
+| GAP-016 | Medium | Some model skeletons may be unused | Complexity | Entity audit needed |
+| GAP-017 | Medium | Frontend scoring presets may drift from backend | Config drift | Contract tests needed |
+| GAP-018 | Medium | Academic benchmark missing | Validity unknown | Planned |
+| GAP-019 | Medium | Disclaimer review incomplete | Misinterpretation | Partial |
+| GAP-020 | Low | Encoding/i18n inconsistencies | UX/docs quality | Partial |
 
-Remediated in this implementation:
+## 3. Open Questions
 
-- GAP-004: database-backed durable queue replaces `BackgroundTasks` for canonical analysis execution.
-- GAP-009: password policy and auth endpoint rate limits added.
-- GAP-011: quarantine, signature checks, local scan policy, and accepted storage gate added.
-- GAP-012: configurable retention and purge service added with dry-run default.
-- GAP-014: primary list APIs now use pagination.
+| ID | Question | Proposed owner |
+|---|---|---|
+| OQ-001 | What is the final public policy for report aggregate penalties? | Product + scoring owner |
+| OQ-002 | Which registration lifecycle is required for lecturers? | Product + security |
+| OQ-003 | How much evidence should students see in a future portal? | Product |
+| OQ-004 | What retention period is approved by policy? | Product + privacy |
+| OQ-005 | Which providers may receive which text fields? | Security + privacy |
+| OQ-006 | When should the database queue be replaced by a broker? | Backend + DevOps |
+| OQ-007 | Is multi-tenancy required for the next deployment context? | Product |
+| OQ-008 | How far may assignment-specific weights vary? | Product + scoring owner |
+| OQ-009 | Should report history be immutable or mutable? | Backend + product |
+| OQ-010 | Who owns benchmark labeling and approval? | Academic owner |
 
-Partially remediated:
+## 4. Consistency Rule
 
-- GAP-005: CI workflows and backend dev test dependencies added; PostgreSQL integration/security tests and browser E2E still need concrete suites.
-- Observability: correlation ID, readiness, and queue metrics are present; dashboards/alerts still need environment-specific setup.
-
-New ADR:
-
-- ADR-008: For pilot readiness, TrustLens uses a database-backed queue in `processing_jobs`. This keeps deployment simple while providing restart-safe queued work, worker claim visibility, and retry metadata. A broker such as Redis/Celery can replace the queue later without changing the public API contract.
-# Current P0/P1 gap status - 2026-07-06
-
-For the authoritative completion matrix, see [P0/P1 completion status](P0_P1_Completion_Status.md).
-
-Superseded gap states:
-
-- GAP-004 is now completed for pilot through the database-backed `processing_jobs` queue.
-- GAP-009 is now partially remediated through password policy, rate limits, refresh rotation, replay rejection, and logout revocation.
-- GAP-011 is now partially remediated through quarantine, signature checks, local scan policy, and accepted-storage gate.
-- GAP-012 is now partially remediated through configurable retention defaults and purge dry-run/apply endpoint.
-- GAP-014 is now remediated for primary list APIs through the page contract.
-
-Still open or partial:
-
-- GAP-005 remains partial until PostgreSQL integration/security tests and browser E2E are present and required in branch protection.
-- GAP-010 remains open for CSP and HttpOnly Secure SameSite cookie strategy.
-- GAP-018 remains open until benchmark/calibration artifacts exist.
-- GAP-019 remains partial until report/UI disclaimer review is accepted.
-- GAP-020 remains open for full i18n/encoding cleanup.
+The system is consistent only when API contract, state machine, pipeline, scoring
+definition, permission vocabulary, error schema, mock policy, ownership model, and
+docs all match source code and executable evidence.

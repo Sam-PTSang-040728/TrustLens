@@ -1,48 +1,54 @@
-# Checklist Release Readiness TrustLens v1.2
+﻿# Release Readiness Checklist v1.2
 
-**Cách dùng:** mỗi mục phải có owner, evidence link và ngày xác nhận. Checkbox không có evidence không được tính là hoàn thành.
+**Status:** release-gate checklist
+**Rule:** a checked item without evidence is treated as unchecked.
 
-## 1. Scope và version
+## 1. Scope and Version
 
-- [ ] Release commit và submodule pointers đã khóa.
-- [ ] Backend version, frontend version và Trust Score version được ghi nhận.
-- [ ] Không có feature ngoài scope được hiển thị như đã hỗ trợ.
-- [ ] Known limitations đã cập nhật.
-- [ ] Changelog đã cập nhật.
+- [ ] Release commit and submodule pointers are locked.
+- [ ] Application/backend/frontend versions remain `1.2.0`.
+- [ ] API remains `v1` under `/api/v1`.
+- [ ] Trust Score remains `trust-score-v1.2`.
+- [ ] No unsupported feature is shown as supported.
+- [ ] Known limitations are updated and approved.
 
-## 2. Repository và CI
+## 2. Required Gates
 
-- [ ] GitHub Actions checkout `submodules: recursive`.
-- [ ] Backend CI pass.
-- [ ] Frontend CI pass.
-- [ ] Docs lint pass.
-- [ ] Dependency audit pass hoặc có risk acceptance.
-- [ ] Required checks được bật trong branch protection.
-- [ ] Không merge trực tiếp bypass required checks ngoài break-glass procedure.
+| Gate | Required evidence | Status |
+|---|---|---|
+| Ruff | Command output or CI run | Open |
+| Pytest | Command output or CI run | Open |
+| Alembic upgrade head | PostgreSQL upgrade log | Blocked until DB evidence |
+| PostgreSQL integration | Integration report | Blocked |
+| Ownership negative tests | Security/API test report | Blocked |
+| Frontend lint/build | Command output or CI run | Open |
+| Browser E2E | E2E report | Blocked |
+| Secret/dependency scan | CI/security report | Open |
+| Restore evidence | Restore drill report | Blocked |
 
-## 3. Backend quality
+## 3. Backend Quality
 
-- [ ] Ruff/lint pass.
-- [ ] Unit tests pass.
-- [ ] PostgreSQL integration tests pass.
-- [ ] Alembic upgrade từ empty DB pass.
-- [ ] Migration từ previous release snapshot pass.
+- [ ] `ruff check app tests` passes.
+- [ ] `pytest` passes.
+- [ ] `alembic upgrade head` passes on PostgreSQL.
+- [ ] Migration from previous release snapshot passes.
 - [ ] Ownership negative tests pass.
-- [ ] Retry/queue concurrency tests pass.
-- [ ] Export files mở được.
+- [ ] Error schema contract tests pass.
+- [ ] Worker retry/concurrency/stale recovery tests pass.
+- [ ] Export files open and match authorization rules.
 
-## 4. Frontend quality
+## 4. Frontend Quality
 
-- [ ] Lint pass.
-- [ ] Production build pass.
+- [ ] `npm ci` passes.
+- [ ] `npm run lint` passes.
+- [ ] `npm run build` passes.
 - [ ] Component/service tests pass.
-- [ ] Browser E2E smoke pass.
-- [ ] Backend mode không fallback mock.
-- [ ] Không gọi endpoint không tồn tại.
-- [ ] Accessibility smoke pass.
-- [ ] Error/loading/empty states đã kiểm tra.
+- [ ] Browser E2E smoke passes in backend mode.
+- [ ] Production build does not enable mock mode.
+- [ ] Accessibility smoke/audit passes.
+- [ ] Error/loading/empty states are checked.
 
-## 5. Core acceptance flow
+## 5. Core Flow
 
 - [ ] Register/login.
 - [ ] Course/class/assignment creation.
@@ -51,49 +57,50 @@
 - [ ] Analyze returns persisted job.
 - [ ] Worker processes job.
 - [ ] Progress reflects backend state.
-- [ ] Completed job has report ID.
-- [ ] Report renders C1–C7 evidence.
-- [ ] PDF/DOCX/XLSX export.
-- [ ] Failed job retry preserves lineage.
-- [ ] Cross-user access denied.
+- [ ] Completed job has `report_id`.
+- [ ] Report renders C1-C7 evidence.
+- [ ] PDF/DOCX/XLSX export works.
+- [ ] Failed terminal job retry preserves lineage.
+- [ ] Cross-user access is denied.
 
 ## 6. Security
 
-- [ ] Production secret length/policy pass.
-- [ ] No secret in repository/history scan scope.
-- [ ] Exact CORS allow-list.
-- [ ] HTTPS/HSTS.
-- [ ] CSP/security headers.
-- [ ] Rate limiter suitable for deployment topology.
+- [ ] Public registration no longer creates active lecturers directly.
+- [ ] Production secret policy passes.
+- [ ] No secrets in repository/history scan scope.
+- [ ] Exact CORS allow-list configured.
+- [ ] HTTPS/HSTS configured for deployment.
+- [ ] CSP/security headers validated.
+- [ ] Shared rate limiter configured if multiple API processes exist.
 - [ ] Refresh rotation/replay/logout tests pass.
-- [ ] Malware scanner approved and tested.
-- [ ] Private storage and authorized download.
-- [ ] Error/log redaction verified.
-- [ ] No unresolved Critical/High issue.
+- [ ] Approved malware scanner is tested.
+- [ ] Private storage and authorized download are configured.
+- [ ] Error/log redaction is verified.
+- [ ] No unresolved Critical/High issue remains.
 
-## 7. Queue và operations
+## 7. Queue and Operations
 
-- [ ] Worker process deployed separately from API.
+- [ ] Worker process is deployed separately from API.
 - [ ] Queue mode is `database`.
 - [ ] Heartbeat updates during long jobs.
-- [ ] Stale-job recovery test pass.
-- [ ] Queue metrics available.
-- [ ] Queue-stuck alert configured.
-- [ ] Provider timeout/fallback configured.
-- [ ] Disk/storage alert configured.
+- [ ] Stale-job recovery test passes.
+- [ ] Queue metrics are available.
+- [ ] Queue-stuck alert is configured.
+- [ ] Provider timeout/fallback policy is configured.
+- [ ] Disk/storage alert is configured.
 
-## 8. Data lifecycle
+## 8. Data Lifecycle
 
-- [ ] Retention values approved.
-- [ ] Purge dry-run reviewed.
-- [ ] Purge apply tested in non-production.
-- [ ] Rejected quarantine files cleaned.
+- [ ] Retention values are approved.
+- [ ] Purge dry-run is reviewed.
+- [ ] Purge apply is tested in non-production.
+- [ ] Rejected quarantine files are cleaned by policy.
 - [ ] Export retention works.
-- [ ] Backup encrypted.
-- [ ] Restore drill completed.
-- [ ] DB-file reconciliation completed after restore.
+- [ ] Backup is encrypted.
+- [ ] Restore drill is completed.
+- [ ] DB-file reconciliation is completed after restore.
 
-## 9. Trust Score governance
+## 9. Trust Score Governance
 
 - [ ] Weights sum to 100.
 - [ ] Fixed test vectors pass.
@@ -101,21 +108,29 @@
 - [ ] Confidence is separate from score.
 - [ ] Penalty is visible/explainable.
 - [ ] Disclaimer appears in UI/report.
-- [ ] Benchmark/calibration status disclosed.
+- [ ] Benchmark/calibration status is disclosed.
 - [ ] Scoring changes have changelog and compatibility note.
 
-## 10. Documentation
+## 10. Evidence Register
 
-- [ ] SRS matches implemented scope.
-- [ ] API reference matches mounted router.
-- [ ] FE–BE contract matrix reviewed.
-- [ ] Deployment guide tested from clean environment.
-- [ ] Worker runbook tested.
-- [ ] Security hardening checklist reviewed.
-- [ ] Known limitations published.
-- [ ] Demo/pilot guide does not overclaim accuracy.
+| Evidence | Required for | Link/location | Owner | Date |
+|---|---|---|---|---|
+| Backend CI run | Backend gate | | | |
+| Frontend CI run | Frontend gate | | | |
+| Docs CI run | Documentation gate | | | |
+| PostgreSQL integration report | P0 backend acceptance | | | |
+| Ownership negative report | Security/IDOR gate | | | |
+| Browser E2E report | User-flow acceptance | | | |
+| Worker concurrency/crash report | Queue reliability | | | |
+| Export parser verification | Report/export gate | | | |
+| Migration head and upgrade log | Data/schema gate | | | |
+| Malware scanner evidence | Upload security | | | |
+| CORS/CSP/rate-limit evidence | Production security | | | |
+| Backup restore report | Operations gate | | | |
+| Benchmark/calibration report | Trust Score governance | | | |
+| Known limitations approval | Product/legal/academic scope | | | |
 
-## 11. Go/No-Go record
+## 11. Decision Record
 
 | Field | Value |
 |---|---|
@@ -131,62 +146,6 @@
 | Approvers | |
 | Date | |
 
-`GO WITH ACCEPTED RISKS` chỉ phù hợp controlled pilot; không được dùng để bỏ qua lỗi Critical hoặc nguy cơ lộ dữ liệu.
-
-## 12. Evidence Register
-
-Before the decision meeting, attach or link the following evidence. A checked box
-without evidence is treated as unchecked.
-
-| Evidence | Required for | Link/location | Owner | Date |
-|---|---|---|---|---|
-| Backend CI run | Repository/backend gate | | | |
-| Frontend CI run | Frontend gate | | | |
-| Docs CI run | Documentation gate | | | |
-| PostgreSQL integration report | P0 backend acceptance | | | |
-| Ownership negative report | Security/IDOR gate | | | |
-| Browser E2E report | User-flow acceptance | | | |
-| Worker concurrency/crash report | Queue reliability | | | |
-| Export parser verification | Report/export gate | | | |
-| Migration head and upgrade log | Data/schema gate | | | |
-| Malware scanner evidence | Upload security | | | |
-| CORS/CSP/rate-limit evidence | Production security | | | |
-| Backup restore report | Operations gate | | | |
-| Benchmark/calibration report | Trust Score governance | | | |
-| Known limitations approval | Product/legal/academic scope | | | |
-
-## 13. Decision Rules
-
-Decision must be one of:
-
-- `GO`: all P0 and release-critical P1 gates completed with evidence.
-- `NO-GO`: any P0 gate missing/failing, any unresolved Critical/High security issue,
-  any IDOR/data-loss risk, or production mock/batch contract mismatch.
-- `GO WITH ACCEPTED RISKS`: controlled pilot only; each remaining Partial/Open/Blocked
-  item has owner, severity, expiry date, mitigation and user-facing limitation.
-
-`GO WITH ACCEPTED RISKS` cannot be used for:
-
-- missing ownership enforcement;
-- missing production malware control for real uploads;
-- untested restore when real data is in scope;
-- frontend calling nonexistent backend endpoints in production;
-- Trust Score presented as fraud/academic-truth judgment;
-- secrets, tokens or provider payloads leaking in logs/errors.
-
-## 14. Accepted Risk Template
-
-| Field | Value |
-|---|---|
-| Risk ID | |
-| Backlog item | |
-| Severity | |
-| Scope | |
-| Mitigation | |
-| User-facing limitation | |
-| Expiry date | |
-| Owner | |
-| Approver | |
-
-Accepted risks must be revisited before the expiry date and cannot silently roll into
-the next release.
+`GO WITH ACCEPTED RISKS` is only for controlled pilots. It cannot be used for
+Critical/High security issues, IDOR, data loss risk, production mock fallback, or
+Trust Score being presented as an automatic misconduct judgment.

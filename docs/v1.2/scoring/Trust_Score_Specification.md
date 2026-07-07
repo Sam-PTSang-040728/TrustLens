@@ -1,100 +1,146 @@
-# 05. Đặc tả Trust Score v1.2
+﻿# Trust Score Specification v1.2
 
-## 1. Phạm vi và nguồn
+**Scoring version:** `trust-score-v1.2`
+**Status:** source-aligned baseline
+**Source of truth:** `apps/backend/app/core/trust_score_definition.py`,
+`apps/backend/app/services/scoring_service.py`
 
-Baseline được xác định bởi:
+Trust Score is a review-support signal based on available citation, metadata,
+relevance, and warning evidence. It is not an automated conclusion about fraud,
+academic misconduct, scientific truth, or grading outcome.
 
-- Backend `app/core/trust_score_definition.py`.
-- Backend `app/services/scoring_service.py`.
-- Frontend `src/config/trustScoreConfig.ts`.
-- Version mặc định `trust-score-v1.2`.
-
-Kế hoạch P0 cũ dùng C1–C8 không còn khớp implementation. Baseline chính thức hiện tại là C1–C7.
-
-## 2. Công thức tổng quát
+## 1. Formula
 
 ```text
-Reference Trust Score = C1 + C2 + C3 + C4 + C5 + C6 + C7
+ReferenceScore = clamp(
+    C1 + C2 + C3 + C4 + C5 + C6 + C7 - penalties,
+    0,
+    100
+)
 ```
 
-```text
-10 + 25 + 20 + 20 + 10 + 10 + 5 = 100
-```
+TrustLens v1.2 uses C1-C7. Do not use the older eight-component draft model for this
+baseline.
 
-Report score được aggregate từ citation score và report-level penalty. Penalty phải tách khỏi component weight và được giải thích trong report. Không công bố công thức aggregate chi tiết hơn khi chưa có spec/test vector chính thức.
+## 2. Components
 
-## 3. Thành phần
+| Code | Component | Weight |
+|---|---|---:|
+| C1 | Metadata completeness | 10 |
+| C2 | Metadata verification | 25 |
+| C3 | Source credibility | 20 |
+| C4 | Relevance | 20 |
+| C5 | Recency | 10 |
+| C6 | Citation style | 10 |
+| C7 | Duplicate/concentration | 5 |
 
-| Mã | Tên | Weight | Mục tiêu |
-|---|---|---:|---|
-| C1 | Metadata completeness | 10 | Độ đầy đủ trường citation |
-| C2 | Identity and metadata verification | 25 | Mức khớp provider |
-| C3 | Source credibility evidence | 20 | Loại nguồn, venue, publisher |
-| C4 | Relevance to report | 20 | Mức liên quan với report |
-| C5 | Recency | 10 | Tuổi tài liệu theo bối cảnh |
-| C6 | Citation-style compliance | 10 | Style theo assignment |
-| C7 | Duplicate and concentration risk | 5 | Trùng và tập trung loại nguồn |
+Total weight: `100`.
 
-### C1
+## 3. Labels
 
-Xét author, title, year, venue/publisher, DOI/URL. Required fields phải phụ thuộc source type.
-
-### C2
-
-Xét DOI match, title similarity, author/year consistency, candidate count/margin và provider status. URL trả 200 không đủ cho điểm tối đa.
-
-### C3
-
-Xét source type, publisher, venue, domain, publication/retraction evidence khi có. Whitelist không chứng minh uy tín tuyệt đối.
-
-### C4
-
-Input gồm body report đã loại reference section, assignment context, title/abstract/keyword của reference. Evidence phải ghi provider, model, prompt version, threshold profile, fallback và confidence.
-
-### C5
-
-Ngưỡng mặc định:
-
-| Mức | Tuổi |
-|---|---:|
-| Fresh | ≤ 3 năm |
-| Acceptable | ≤ 5 năm |
-| Review | ≤ 10 năm |
-| Old | ≤ 15 năm |
-| Very old | > 15 năm |
-
-Phải hiệu chỉnh theo lĩnh vực; tài liệu nền tảng không tự động bị coi là lỗi thời.
-
-### C6
-
-So detected style với `required_style`. Style đúng không đồng nghĩa metadata đúng.
-
-### C7
-
-Duplicate detection:
-
-1. DOI chuẩn hóa giống nhau.
-2. URL chuẩn hóa giống nhau.
-3. Fuzzy title + author + year.
-
-C7 cũng theo dõi rủi ro tập trung nguồn.
-
-## 4. Label
-
-| Điểm | Label |
+| Score | Label |
 |---:|---|
-| ≥ 85 | `reliable` |
-| ≥ 70 | `acceptable` |
-| ≥ 50 | `needs_review` |
-| < 50 | `high_risk` |
+| `>= 85` | `reliable` |
+| `>= 70` | `acceptable` |
+| `>= 50` | `needs_review` |
+| `< 50` | `high_risk` |
 
-Label là tín hiệu rà soát, không phải phán quyết.
+Labels support review prioritization only.
 
-## 5. Confidence
+## 4. C2 Metadata Verification Points
 
-Confidence độc lập với Trust Score. Provider unavailable, fallback lexical hoặc metadata thiếu phải giảm confidence và được ghi trong evidence.
+| Status | Points |
+|---|---:|
+| `VERIFIED` | 25 |
+| `PARTIAL_MATCH` | 18 |
+| `AMBIGUOUS` | 10 |
+| `URL_ONLY` | 7 |
+| `NOT_FOUND` | 3 |
+| `PROVIDER_UNAVAILABLE` | 8 |
+| `INVALID_IDENTIFIER` | 0 |
+| `IDENTIFIER_METADATA_CONFLICT` | 0 |
 
-## 6. Evidence contract
+Rules:
+
+- `URL_ONLY` means the URL signal is not academic verification.
+- `NOT_FOUND` does not prove a source is fake.
+- `PROVIDER_UNAVAILABLE` must not be treated as `NOT_FOUND`.
+- DOI/metadata conflict requires evidence and should be visible in report warnings.
+
+## 5. Penalties and Label Caps
+
+| Code | Penalty | Label cap |
+|---|---:|---|
+| `INVALID_IDENTIFIER` | 10 | `high_risk` |
+| DOI/metadata conflict | 15 | `high_risk` |
+| `DUPLICATE_REFERENCE` | 5 | `needs_review` |
+| `RETRACTED_SOURCE` | 30 | `high_risk` |
+| `EXPRESSION_OF_CONCERN` | 10 | `needs_review` |
+| `LOW_RELEVANCE` | 3 | `needs_review` |
+
+Penalties must be explainable and visible separately from component weights.
+
+## 6. Component Notes
+
+### C1 Metadata Completeness
+
+Checks available citation fields such as authors, title, year, DOI/URL, venue, and
+publisher. Required fields may vary by source type.
+
+### C2 Metadata Verification
+
+Uses provider and matcher status. DOI match, title similarity, authors/year, candidate
+count, candidate margin, and provider availability all affect the evidence.
+
+### C3 Source Credibility
+
+Uses available source type, venue, publisher, citation signal, domain, and
+publication-status evidence. Metadata cannot prove methodology quality.
+
+### C4 Relevance
+
+Uses report body context, assignment context, citation title/abstract/metadata, and
+the configured embedding or fallback scorer. Evidence must record provider/model and
+fallback information.
+
+### C5 Recency
+
+Default thresholds:
+
+| Level | Age |
+|---|---:|
+| Fresh | `<= 3 years` |
+| Acceptable | `<= 5 years` |
+| Review | `<= 10 years` |
+| Old | `<= 15 years` |
+| Very old | `> 15 years` |
+
+Field-specific interpretation is required. Older foundational sources are not
+automatically invalid.
+
+### C6 Citation Style
+
+Compares detected style with assignment requirements. Correct style does not prove
+metadata correctness.
+
+### C7 Duplicate/Concentration
+
+Duplicate signals:
+
+1. normalized DOI match;
+2. normalized URL match;
+3. fuzzy title, author, and year match.
+
+C7 also tracks source concentration risk.
+
+## 7. Confidence
+
+Confidence is separate from Trust Score. Provider unavailability, fallback scoring,
+missing abstract, or sparse metadata should reduce confidence and be shown in evidence.
+
+## 8. Evidence Shape
+
+Representative component payload:
 
 ```json
 {
@@ -103,51 +149,30 @@ Confidence độc lập với Trust Score. Provider unavailable, fallback lexica
   "raw_score": 18.0,
   "raw_max_score": 20,
   "ratio": 0.9,
-  "reason": "Mô tả ngắn",
+  "reason": "Short explanation",
   "evidence": {},
   "confidence": 0.86
 }
 ```
 
-## 7. Invariant
+## 9. Versioning Rule
 
-| ID | Quy tắc |
-|---|---|
-| TS-INV-001 | Tổng weight active bằng 100 |
-| TS-INV-002 | Weight không âm |
-| TS-INV-003 | Config sai phải reject/fallback an toàn |
-| TS-INV-004 | Report lưu scoring version |
-| TS-INV-005 | `NOT_FOUND` không chứng minh fake |
-| TS-INV-006 | URL reachable không chứng minh academic |
-| TS-INV-007 | Score không thay chuyên gia |
-| TS-INV-008 | Confidence khác Trust Score |
-| TS-INV-009 | Penalty phải được công khai |
-| TS-INV-010 | Thay đổi logic cần test vector và version |
+Do not change `trust-score-v1.2` unless the scoring algorithm changes.
 
-## 8. Preset frontend
+Increment scoring version when changing weights, label thresholds, component logic,
+aggregate logic, penalty logic, provider/model behavior with score impact, calibration
+profile, source mapping, or duplicate thresholds. A scoring version change requires
+test vectors, benchmark notes, docs, and compatibility guidance.
 
-Frontend định nghĩa `DEFAULT`, `SOURCE_FOCUS`, `RELEVANCE_FOCUS`. Việc preset thực sự được lưu và áp dụng xuyên backend phải được xác nhận bằng API/integration test; frontend không được là nguồn sự thật độc lập.
+## 10. Calibration Requirement
 
-## 9. Giới hạn
+Academic calibration is not complete in this baseline. Required artifacts before
+formal accuracy claims:
 
-- Provider không bao phủ mọi nguồn.
-- Parser có thể sai format hiếm.
-- Abstract có thể thiếu.
-- Embedding phụ thuộc ngôn ngữ/model.
-- Recency phụ thuộc lĩnh vực.
-- Credibility không thể chứng minh hoàn toàn bằng metadata.
-- Fuzzy duplicate có false positive.
-- Report score cần benchmark với chuyên gia.
-
-## 10. Khi nào tăng version
-
-Tăng version khi đổi weight, label threshold, component logic, aggregate, penalty, provider/model có tác động, calibration profile, source mapping hoặc duplicate threshold. Mỗi version cần changelog, test vector, benchmark summary và compatibility note.
-# P1 pilot-readiness update - 2026-07-06
-
-Trust Score remains `trust-score-v1.2`; no scoring weight or threshold change was made in this implementation.
-
-Pilot-readiness clarification:
-
-- Trust Score is a review-support signal, not an automated academic misconduct decision.
-- Any future calibration profile, threshold change, model change, provider weighting change, or aggregate/penalty logic change must increment the scoring version and add fixed test vectors.
-- Benchmark/calibration artifacts are still required before formal pilot claims about accuracy: dataset card, labeling guide, benchmark report, calibration profile, limitations, and scoring changelog.
+- dataset card;
+- labeling guide;
+- fixed test vectors;
+- benchmark report;
+- calibration profile;
+- limitations;
+- scoring changelog.

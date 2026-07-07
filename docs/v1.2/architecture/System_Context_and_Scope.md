@@ -1,141 +1,166 @@
-# 02. Ngữ cảnh Hệ thống và Phạm vi
+﻿# System Context and Scope
 
-## 1. Ranh giới
+**Status:** source-aligned v1.2 baseline
 
-TrustLens gồm:
+## 1. Boundary
 
-1. React frontend trên trình duyệt.
-2. FastAPI backend xử lý auth, nghiệp vụ, pipeline và report.
-3. PostgreSQL và file storage.
-4. Provider ngoài cho metadata/embedding.
+TrustLens includes:
 
-Provider ngoài không phải nguồn sự thật tuyệt đối.
+1. React frontend in the browser.
+2. FastAPI backend for auth, business workflows, pipeline orchestration, and reports.
+3. PostgreSQL and file storage.
+4. Database-backed worker queue using `processing_jobs`.
+5. External providers for metadata and relevance evidence.
 
-## 2. Actor
+External providers are evidence sources, not absolute truth sources.
 
-| Mã | Actor | Trách nhiệm |
+## 2. Actors
+
+| Code | Actor | Responsibility |
 |---|---|---|
-| ACT-01 | Khách truy cập | Landing, register, login |
-| ACT-02 | Giảng viên | Quản lý lớp/assignment, upload, analyze, report |
-| ACT-03 | Admin | Toàn quyền lecturer + user/provider/audit |
-| ACT-04 | Sinh viên | Role tồn tại, portal deferred |
-| ACT-05 | Metadata provider | Crossref/OpenAlex và provider mở rộng |
-| ACT-06 | Embedding provider | Gemini/local fallback |
-| ACT-07 | Người vận hành | Cấu hình, migration, storage, backup, monitor |
+| ACT-01 | Visitor | Landing, register, login. |
+| ACT-02 | Lecturer | Manage classes/assignments, upload, analyze, review reports. |
+| ACT-03 | Admin | Lecturer capabilities plus users/providers/audit/admin tools. |
+| ACT-04 | Student | Role exists; full student portal is deferred. |
+| ACT-05 | Metadata provider | Crossref/OpenAlex/URL evidence. |
+| ACT-06 | Embedding provider | Gemini/local relevance evidence. |
+| ACT-07 | Operator | Configuration, migration, storage, backup, worker, monitoring. |
 
-## 3. Sơ đồ ngữ cảnh
+## 3. Context Diagram
 
 ```mermaid
 flowchart LR
-    G[Khách truy cập]
-    L[Giảng viên]
-    A[Quản trị viên]
-    S[Sinh viên - deferred]
+    Visitor[Visitor]
+    Lecturer[Lecturer]
+    Admin[Admin]
+    Student[Student - deferred]
     FE[React Frontend]
     API[FastAPI Backend]
     DB[(PostgreSQL)]
+    Queue[(processing_jobs)]
+    Worker[Worker]
     FS[(File Storage)]
-    META[Crossref / OpenAlex]
+    META[Crossref / OpenAlex / URL Check]
     EMB[Gemini / Local Embedding]
 
-    G --> FE
-    L --> FE
-    A --> FE
-    S -. future .-> FE
+    Visitor --> FE
+    Lecturer --> FE
+    Admin --> FE
+    Student -. future .-> FE
     FE --> API
     API --> DB
+    API --> Queue
     API --> FS
-    API --> META
-    API --> EMB
+    Worker --> Queue
+    Worker --> DB
+    Worker --> FS
+    Worker --> META
+    Worker --> EMB
 ```
 
-## 4. Phạm vi dữ liệu
+## 4. Data Scope
 
-### Tài khoản
+### Account Data
 
-Email, họ tên, role, permission, trạng thái, hồ sơ trường/khoa/chuyên ngành, thời điểm đăng nhập và audit.
+Email, full name, role, permissions, active state, profile details, login timestamps,
+refresh token records, and audit events.
 
-### Học thuật
+### Academic Data
 
-Học phần, lớp, assignment, submission, file, text trích xuất, reference section, citation, metadata, Trust Score, warning, report và export.
+Course, class, assignment, submission, file, extracted text, reference section,
+citation, metadata, Trust Score, warning, report, and export records.
 
-### AI
+### AI and Provider Data
 
-Config hiện tại mặc định:
+Default AI configuration avoids raw input persistence/logging:
 
-- `AI_DATA_MODE=sanitized_text_only`.
-- Không lưu raw AI input.
-- Không log raw input text.
+- `AI_DATA_MODE=sanitized_text_only`;
+- `AI_PERSIST_RAW_INPUT=false`;
+- `AI_LOG_INPUT_TEXT=false`.
 
-Production phải xác minh provider nhận và lưu dữ liệu gì.
+Production deployments must approve provider data handling, retention, and legal
+basis separately.
 
-## 5. Ownership hiện tại
+## 5. Ownership Scope
 
 ```text
 User (Lecturer)
-  └── Class
-       └── Assignment
-            └── Submission
-                 ├── File
-                 ├── Processing Job
-                 ├── Extracted Document
-                 ├── Citation / Metadata
-                 └── Report / Export
+  -> Class
+      -> Assignment
+          -> Submission
+              -> File
+              -> ProcessingJob
+              -> ExtractedDocument
+              -> Citation / MetadataRecord
+              -> Report / ReportExport
 ```
 
-Admin có phạm vi rộng hơn. Đây chưa phải tenant isolation.
+Admin has broader system scope. Tenant isolation is not implemented in v1.2.
 
-## 6. Luồng chính
+## 6. Main Flow
 
-### Đăng nhập
+### Login
 
-1. Client gửi email/mật khẩu.
-2. Backend xác thực.
-3. Trả access/refresh token.
-4. Frontend lưu token và gắn bearer.
-5. Khi 401, thử refresh một lần.
+1. Client sends email/password.
+2. Backend authenticates active user.
+3. Backend returns access and refresh tokens.
+4. Frontend stores tokens and attaches bearer token.
+5. Refresh rotates the server-side refresh token.
+6. Logout revokes refresh token.
 
-### Phân tích
+### Analyze
 
-1. Chọn assignment.
-2. Upload file.
-3. Backend kiểm tra ownership và lưu dữ liệu.
-4. Gọi analyze.
-5. Backend tạo job, chạy `BackgroundTasks`.
-6. Frontend poll mỗi 2 giây.
-7. Pipeline tạo report.
-8. Frontend mở report.
+1. Lecturer selects assignment.
+2. Frontend uploads PDF/DOCX.
+3. Backend checks ownership and upload constraints.
+4. Backend stores file in quarantine and promotes only clean accepted files.
+5. Frontend calls `POST /api/v1/submissions/{submission_id}/analyze`.
+6. Backend creates/enqueues a `processing_jobs` record.
+7. Worker runs the canonical analysis pipeline.
+8. Frontend polls job status.
+9. Completed job links to a report.
+10. Frontend opens report/export views.
 
 ### Metadata
 
 1. Parse citation.
-2. Query theo DOI/title/author/year.
-3. So khớp candidate.
-4. Lưu status/confidence/evidence.
-5. `NOT_FOUND` không được diễn giải là fake.
+2. Query by DOI/title/author/year when available.
+3. Match provider candidates.
+4. Store status, confidence, and evidence.
+5. `NOT_FOUND` is not interpreted as fake.
 
-## 7. In-scope baseline
+## 7. In-Scope Baseline
 
-- Web cho lecturer/admin.
-- PDF/DOCX có text layer.
+- Lecturer/admin web app.
+- Text-layer PDF and DOCX.
 - Course/class/assignment/submission.
-- Metadata verification.
-- C1–C7 scoring.
-- Job polling.
+- Metadata verification with Crossref/OpenAlex/URL evidence.
+- Seven-component Trust Score v1.2.
+- Database-backed job polling.
 - Report/export.
-- Audit và provider admin cơ bản.
+- Audit and basic provider/admin tooling.
 
-## 8. Out-of-scope baseline
+## 8. Out-of-Scope Baseline
 
-Native mobile, OCR, full-text crawling trái phép, plagiarism verdict, automatic grading, enterprise multi-tenancy, billing, SSO production, durable queue, realtime socket và SLA production.
+- Native mobile app.
+- OCR.
+- Plagiarism verdicts.
+- Paywalled full-text validation.
+- Citation-in-context verification.
+- Automatic grading.
+- Enterprise multi-tenancy.
+- Billing.
+- Production SSO.
+- Realtime socket/SSE progress.
+- Production SLA claims.
 
-## 9. Giả định
+## 9. Assumptions
 
-| ID | Giả định | Rủi ro nếu sai |
+| ID | Assumption | Risk if false |
 |---|---|---|
-| ASM-01 | Có reference section nhận diện được | `NO_REFERENCE_SECTION` |
-| ASM-02 | PDF có text layer hoặc DOCX đọc được | PDF scan thất bại |
-| ASM-03 | Provider phản hồi đủ ổn định | Confidence giảm hoặc unknown |
-| ASM-04 | Ownership class/assignment chính xác | Từ chối nhầm hoặc lộ dữ liệu |
-| ASM-05 | Scoring version được lưu | Report cũ khó giải thích |
-| ASM-06 | File storage được bảo vệ | Mất hoặc lộ file |
+| ASM-01 | Reference section can be detected. | `NO_REFERENCE_SECTION`. |
+| ASM-02 | PDF has text layer or DOCX can be read. | OCR-not-supported failure. |
+| ASM-03 | Providers respond within configured limits. | Lower confidence or unavailable status. |
+| ASM-04 | Class/assignment ownership is accurate. | False denial or data leakage. |
+| ASM-05 | Scoring version is stored. | Old reports become hard to explain. |
+| ASM-06 | File storage is protected and restorable. | File loss or disclosure. |
