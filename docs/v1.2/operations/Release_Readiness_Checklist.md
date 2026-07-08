@@ -1,12 +1,12 @@
 ﻿# Release Readiness Checklist v1.2
 
-**Status:** release-gate checklist
+**Status:** v1.2.1 release-gate checklist
 **Rule:** a checked item without evidence is treated as unchecked.
 
 ## 1. Scope and Version
 
 - [ ] Release commit and submodule pointers are locked.
-- [ ] Application/backend/frontend versions remain `1.2.0`.
+- [ ] Application/backend/frontend versions are `1.2.1`.
 - [ ] API remains `v1` under `/api/v1`.
 - [ ] Trust Score remains `trust-score-v1.2`.
 - [ ] No unsupported feature is shown as supported.
@@ -134,7 +134,7 @@
 
 | Field | Value |
 |---|---|
-| Release version | |
+| Release version | `1.2.1` |
 | Commit SHA | |
 | Backend submodule SHA | |
 | Frontend submodule SHA | |

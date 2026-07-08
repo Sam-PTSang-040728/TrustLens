@@ -1,9 +1,9 @@
 ﻿# TrustLens Documentation v1.2
 
 **Status:** canonical documentation baseline
-**Application version:** `1.2.0`
-**Backend version:** `1.2.0`
-**Frontend version:** `1.2.0`
+**Application version:** `1.2.1`
+**Backend version:** `1.2.1`
+**Frontend version:** `1.2.1`
 **API version:** `v1`
 **API prefix:** `/api/v1`
 **Scoring version:** `trust-score-v1.2`
@@ -68,6 +68,6 @@ itself is not enough evidence to mark a capability `Implemented` or `Verified`.
    scoring logic, or deployment behavior.
 2. Keep future work in roadmap/backlog files, not in SRS as implemented behavior.
 3. Keep Trust Score v1.2 on C1-C7 unless the scoring version is intentionally changed.
-4. Keep public registration role safety marked `Blocked` until code no longer creates
-   an active lecturer account directly from public registration.
+4. Keep public registration role safety marked `Partial` until staging/production
+   evidence confirms the public endpoint is disabled.
 5. Keep production readiness claims conditional on release-gate evidence.

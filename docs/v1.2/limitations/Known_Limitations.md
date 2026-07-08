@@ -1,7 +1,7 @@
 ﻿# Known Limitations for TrustLens v1.2
 
 **Status:** release-facing limitation register
-**Application version:** `1.2.0`
+**Application version:** `1.2.1`
 
 These limitations are part of the release contract and must be visible in pilot or
 release materials.
@@ -20,9 +20,9 @@ release materials.
 10. Local file storage is not suitable for large production deployments without
     additional storage, backup, and security controls.
 11. Multi-tenancy is not implemented.
-12. Public registration role safety is a blocker because public registration creates
-    active lecturers in the current source.
-13. Application version remains `1.2.0`.
+12. Public registration is closed by default outside development, but staging and
+    production evidence must still be attached before stable release.
+13. Application version is `1.2.1`.
 
 ## 2. File and Extraction Limits
 
@@ -61,7 +61,7 @@ release materials.
 - Local scan policy is not a production malware scanner.
 - Process-local rate limiting is not enough for multi-replica deployments.
 - Browser token storage increases XSS impact until cookie/CSP hardening is completed.
-- Public registration role safety is blocked.
+- Public registration role safety requires staging/production evidence.
 - Production deployments must configure exact CORS origins, secrets, retention, and
   provider policies.
 - Restore evidence is not complete.

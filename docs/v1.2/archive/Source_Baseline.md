@@ -1,8 +1,8 @@
 ﻿# Source Baseline
 
-**Snapshot date:** 2026-07-07
-**Status:** code-inspection baseline for TrustLens v1.2 documentation
-**Application version:** `1.2.0`
+**Snapshot date:** 2026-07-08
+**Status:** code-inspection baseline for TrustLens v1.2.1 release-candidate work
+**Application version:** `1.2.1`
 **API version:** `v1`
 **Scoring version:** `trust-score-v1.2`
 
@@ -14,9 +14,9 @@ evidence.
 
 | Component | Repository | Commit SHA | Version |
 |---|---|---|---|
-| Root | `PhanTanSang-netizen/trustlens` | `6a05af6a234b83b830fcb8faafa8175cb182d74a` | `1.2.0` |
-| Backend | `PhanTanSang-netizen/TrustLens-Backend` | `b4ee9aa7f4ab7cef4b516f913185e2f63184bd7e` | `1.2.0` |
-| Frontend | `tranquynhnhu102025-hash/Frontend-TrustLens` | `3517264c1ed8c8f35d72b15aef59f1b9498280e8` | `1.2.0` |
+| Root | `PhanTanSang-netizen/trustlens` | pending root release commit | `1.2.1` |
+| Backend | `PhanTanSang-netizen/TrustLens-Backend` | `f96e50500ce590313daad3f0c22ad906bad15665` | `1.2.1` |
+| Frontend | `tranquynhnhu102025-hash/Frontend-TrustLens` | `79ace80cf1ca35751b845d67436e771688eb183a` | `1.2.1` |
 
 GitHub may show redirected owners if repositories were renamed or transferred. Use
 the currently working URL for navigation, but do not rewrite project history without
@@ -61,7 +61,7 @@ Plans and archived review notes must not be used alone to claim runtime behavior
 | BASE-002 | Canonical analysis endpoint is `POST /api/v1/submissions/{submission_id}/analyze`. | Document as canonical. |
 | BASE-003 | `POST /api/v1/jobs/submissions/{submission_id}/process` is a backward-compatible alias. | Document as alias for new clients to avoid. |
 | BASE-004 | Jobs are persisted in `processing_jobs`; worker command is `python -m app.workers.tasks`. | Document as current queue architecture. |
-| BASE-005 | Public registration creates `role="lecturer"` and `is_active=True`. | Mark public registration role safety `Blocked`. |
+| BASE-005 | Public registration is gated by `PUBLIC_REGISTRATION_ENABLED`; it defaults to enabled only in development and returns `AUTH_PUBLIC_REGISTRATION_DISABLED` when closed. | Mark public registration role safety `Partial` until staging/production evidence is attached. |
 | BASE-006 | Crossref, OpenAlex, URL checker, and publication status evaluator have runtime evidence. | Document as implemented providers. |
 | BASE-007 | Semantic Scholar client exists but is not part of the canonical metadata verification call path. | Do not list as implemented provider. |
 | BASE-008 | Error normalization exists through exception handlers and correlation ID middleware, but endpoint coverage still needs contract tests. | Mark official error schema `Partial` until verified. |
